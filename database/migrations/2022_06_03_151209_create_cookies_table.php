@@ -15,8 +15,8 @@ class CreateCookiesTable extends Migration
     {
         Schema::create('cookies', function (Blueprint $table) {
             $table->id();
-            $table->string('cookies');
-            $table->string('csrftoken');
+            $table->longText('cookies');
+            $table->longText('csrftoken');
             $table->timestamps();
         });
     }
