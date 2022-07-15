@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateCookiesTable extends Migration
+class CreateStatusesTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,10 +13,10 @@ class CreateCookiesTable extends Migration
      */
     public function up()
     {
-        Schema::create('cookies', function (Blueprint $table) {
+        Schema::create('statuses', function (Blueprint $table) {
             $table->id();
-            $table->longText('cookies')->nullable();
-            $table->longText('csrftoken')->nullable();
+            $table->text('name')->nullable();
+            $table->integer('status')->nullable();
             $table->timestamps();
         });
     }
@@ -28,6 +28,6 @@ class CreateCookiesTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('cookies');
+        Schema::dropIfExists('statuses');
     }
 }

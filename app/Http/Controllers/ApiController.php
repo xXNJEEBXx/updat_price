@@ -4,9 +4,12 @@
 namespace App\Http\Controllers;
 
 
-use App\Models\User;
+
 use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Request;
+use App\Models\cookie;
+use App\Models\status;
+
 
 class ApiController extends Controller
 {
@@ -74,5 +77,37 @@ class ApiController extends Controller
                 return "price is too low:" . $ads_list["data"][0]["adv"]["price"];
             }
         }
+    }
+
+    public function postcookies(Request $request)
+    {
+        $data = cookie::get()->first();
+        if ($data == null) {
+            $cookie_table = new  cookie;
+            $cookie_table->cookies = $request["cookies"];
+            $cookie_table->csrftoken = $request["csrftoken"];
+            $cookie_table->save();
+        } else {
+            $cookie_table = cookie::where('id', "1")->first();
+            $cookie_table->cookies = $request["cookies"];
+            $cookie_table->csrftoken = $request["csrftoken"];
+            $cookie_table->save();
+        }
+        return  $request["cookies"];
+    }
+
+    public function poststatus(Request $request)
+    {
+        $data = status::get()->first();
+        if ($data == null) {
+            $status_table = new  status;
+            $status_table->status = $request["status"];
+            $status_table->save();
+        } else {
+            $status_table = status::where('id', "1")->first();
+            $status_table->status = $request["status"];
+            $status_table->save();
+        }
+        return  $request["status"];
     }
 }

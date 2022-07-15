@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Route;
 
 
 Route::post('/changprics', 'ApiController@changprics');
-Route::post('/getpricesapi', 'ApiController@getpricesapi');
+Route::post('/postcookies', 'ApiController@postcookies');
 
 Route::group(['middleware' => ['auth:sanctum']], function () {
     // middleware routes here
