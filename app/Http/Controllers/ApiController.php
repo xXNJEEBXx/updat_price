@@ -93,7 +93,55 @@ class ApiController extends Controller
             $cookie_table->csrftoken = $request["csrftoken"];
             $cookie_table->save();
         }
-        return  $request["cookies"];
+        return  $this->getdate($cookie_table->updated_at);
+    }
+
+
+    public function getlastupdate()
+    {
+        $cookie_table = cookie::where('id', "1")->first();
+        if ($cookie_table != null) {
+            return  $this->getdate($cookie_table->updated_at);
+        }
+        return "test";
+    }
+
+    public function getdate($date)
+    {
+        $secands = (time() - strtotime($date));
+        function loop($secands, $minets, $hours)
+        {
+            if ($secands >= 3600) {
+                $secands2 = $secands % 3600;
+                $hours = ($secands - $secands2) / 3600;
+                return loop($secands2, $minets, $hours);
+            }
+            if ($secands >= 60) {
+                $secands2 = $secands % 60;
+                $minets  = ($secands - $secands2) / 60;
+                return loop($secands2, $minets, $hours);
+            }
+            if ($hours) {
+                $hours = $hours . " hours ";
+            } else {
+                $hours = "";
+            }
+            if ($minets) {
+                $minets = $minets . " minets ";
+            } else {
+                $minets = "";
+            }
+            if ($secands) {
+                $secands = $secands . " secands ";
+            } else {
+                $secands = "";
+            }
+            if (!$secands && !$minets && !$hours) {
+                $secands = 1;
+            }
+            return $hours . $minets . $secands;
+        }
+        return loop($secands, 0, 0);
     }
 
     public function poststatus(Request $request)
@@ -101,13 +149,27 @@ class ApiController extends Controller
         $data = status::get()->first();
         if ($data == null) {
             $status_table = new  status;
-            $status_table->status = $request["status"];
+            $status_table->name = $request["name"];
+            $status_table->status = 1;
             $status_table->save();
         } else {
-            $status_table = status::where('id', "1")->first();
-            $status_table->status = $request["status"];
+            $status_table = status::where('name', $request["name"])->first();
+            $status_table->name = $request["name"];
+            if ($status_table->status) {
+                $status_table->status = 0;
+            } else {
+                $status_table->status = 1;
+            }
             $status_table->save();
         }
-        return  $request["status"];
+        return  $status_table->status;
+    }
+
+    public function getstatus()
+    {
+        $data = status::get()->first();
+        if ($data != null) {
+            return  $data->status;
+        }
     }
 }
