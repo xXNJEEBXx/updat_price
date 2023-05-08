@@ -64,7 +64,7 @@ class updatePrise extends Command
             // if ($time >= $req2["secands"]) {
             //     $req2 = $this->make_req("11464719677996802048", 6998, $req2["last_req"], "ETH", "SAR");
             // }
-            sleep(5);
+            sleep(6);
         }
         return Command::SUCCESS;
     }
