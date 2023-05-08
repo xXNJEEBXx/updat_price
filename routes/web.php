@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', function () {
-    return "test";
+    return view('welcome');
 });
 
 // Route::get('/register', [ApiController::class, 'register' ]);

@@ -4,8 +4,46 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "aa972908906beace99331cb7ab64f303",
+    "content-hash": "2a889927fa318f5e48260bfa7cd09bf6",
     "packages": [
+        {
+            "name": "akbansa/parallel-processor",
+            "version": "v1.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/akbansa/parallel-processing.git",
+                "reference": "f41f28a15a695d41f16a115955f292390daa6dc4"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/akbansa/parallel-processing/zipball/f41f28a15a695d41f16a115955f292390daa6dc4",
+                "reference": "f41f28a15a695d41f16a115955f292390daa6dc4",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=7.0.31",
+                "symfony/process": ">=3.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Akbansa\\LaravelParallelProcessor\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "authors": [
+                {
+                    "name": "Anshul Bansal",
+                    "email": "bansalanshul11@yahoo.com"
+                }
+            ],
+            "description": "Parallel Processor will help you do run commands for parallel execution",
+            "support": {
+                "issues": "https://github.com/akbansa/parallel-processing/issues",
+                "source": "https://github.com/akbansa/parallel-processing/tree/v1.0"
+            },
+            "time": "2020-05-01T16:15:55+00:00"
+        },
         {
             "name": "asm89/stack-cors",
             "version": "v2.0.3",
@@ -8043,5 +8081,5 @@
         "php": "^7.3|^8.0"
     },
     "platform-dev": [],
-    "plugin-api-version": "2.1.0"
+    "plugin-api-version": "2.2.0"
 }

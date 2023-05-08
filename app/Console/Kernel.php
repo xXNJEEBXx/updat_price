@@ -15,8 +15,14 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // $schedule->command('inspire')->hourly();
-
+        // $flag = true;
+        // if ($flag) {
+        //     $dt = time();
+        //     echo $dt;
+        //     $flag = false;
+        //     $schedule->command('command:update_prise')->when(false);
+        //     echo "test??";
+        // }
     }
 
     /**

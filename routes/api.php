@@ -14,12 +14,24 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-
-Route::post('/changprics', 'ApiController@changprics');
+// prics trake
+Route::post('/changprics', 'ApiController@changprics_api');
 Route::post('/postcookies', 'ApiController@postcookies');
 Route::get('/getlastupdate', 'ApiController@getlastupdate');
 Route::post('/poststatus', 'ApiController@poststatus');
 Route::get('/getstatus', 'ApiController@getstatus');
+
+//close orders
+Route::get('/get_processing_orders', 'git_data@processing_orders');
+
+//track ads
+
+Route::post('/post_track_amount_and_price', 'track_controller@post_track_amount_and_price');
+Route::post('/post_track_status', 'track_controller@post_track_status');
+Route::get('/git_track_data', 'track_controller@git_track_data');
+Route::get('/git_track_data2', 'track_controller@track_orders');
+
+
 
 
 Route::group(['middleware' => ['auth:sanctum']], function () {
