@@ -1,4 +1,3 @@
-
 <?php
 
 use Illuminate\Http\Request;
@@ -36,7 +35,7 @@ Route::get('/git_track_data2', 'track_controller@track_orders');
 //progress order
 Route::get('/git_progress_order', 'progress_orders@git_progress_order');
 Route::post('/update_progress_order', 'progress_orders@update_progress_order');
-Route::post('/new_sms_massage', 'progress_orders@new_sms_massage');
+Route::get("/new_sms_massage/name/{name}/number/{number}/message/{message}", 'progress_orders@new_sms_massage');
 
 
 

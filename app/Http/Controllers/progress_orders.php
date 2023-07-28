@@ -60,12 +60,13 @@ class progress_orders extends Controller
         return "orders update successfully";
     }
 
-    public function new_sms_massage(Request $my_data)
+
+    public function new_sms_massage($name, $number, $message)
     {
         $table = new  sms_notification;
-        $table->name = $my_data["name"];
-        $table->number = $my_data["number"];
-        $table->massage =  $my_data["massage"];
+        $table->name = $name;
+        $table->number = $number;
+        $table->massage =  $message;
         $table->save();
         return "sms saved successfully";
     }
