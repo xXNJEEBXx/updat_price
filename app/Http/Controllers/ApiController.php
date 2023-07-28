@@ -9,11 +9,11 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Request;
 use App\Models\cookie;
 use App\Models\status;
-
+//Google2FA
+use PragmaRX\Google2FA\Google2FA;
 
 class ApiController extends Controller
 {
-
     public function changprics_api()
     {
         return $this->changprics("11329712394179661824");
@@ -21,47 +21,57 @@ class ApiController extends Controller
 
     public function changprics($my_data)
     {
+        // $_g2fa = new Google2FA();
+        // $current_otp = $_g2fa->getCurrentOtp("2AWQVM2FJTTCIFEI7T7STBSPYVZXFOL6");
+        // echo $current_otp;
         // if (self::getstatus()) {
         //     return  "program turn off in database";
         // }
-        // $ad_data["asset"], $ad_data["fiat"]
+
         $ads_list = git_data::ads_list($my_data);
         $ads_data = git_data::ads_data();
 
 
         if ($ads_data->status() !== 200) {
-            return  "You need to log in";
+            return "You need to log in";
         }
 
         $my_ad_data = git_data::ad_data($ads_data, $my_data);
 
-        $ad_amount = git_data::ad_amount($my_ad_data);
-
-
-        if (chack_list::chack_full_list($ads_list, $my_data, $ad_amount)) {
-            return  "all ads bad";
-        }
-
+        proces::update_amount($my_data);
+        $my_data = proces::add_defult_ad_amount($my_data, $my_ad_data);
+        $my_data = chack_list::price_type_and_amount($my_data);
+        $my_data = proces::add_crupto_amount($my_data, $my_ad_data);
 
         if (chack_list::chack_ad_status($my_ad_data)) {
             return  "ad is turn off in binance";
         }
-        if (chack_list::chack_amount($ad_amount)) {
+
+        if (chack_list::chack_max_amount($my_data)) {
+            return  "max_amount is out of amount";
+        }
+
+        if (chack_list::chack_amount($my_data)) {
             return  "ad out of amount";
         }
 
-        if (chack_list::chack_up_njeeb($ads_list, $my_data, $ad_amount)) {
+        if (chack_list::chack_full_list($ads_list, $my_data, $my_ad_data)) {
+            return  "all ads bad";
+        }
+
+        if (chack_list::chack_up_njeeb($ads_list, $my_data, $my_ad_data)) {
             //Ad price need to reduction
-            proces::change_price($ads_list, $my_ad_data, $my_data, $ad_amount);
-            return  "ad price reduction from " . $my_ad_data["price"] . " to " . git_data::new_price(git_data::enemy_ad($ads_list, $my_data, $ad_amount));
+            proces::change_price($ads_list, $my_ad_data, $my_data);
+            return  "ad price reduction from " . $my_ad_data["price"] . " to " . git_data::new_price($my_data, git_data::enemy_ad($ads_list, $my_data, $my_ad_data));
         }
-        // return chack_list::chack_down_njeeb($ads_list);
-        if (chack_list::chack_down_njeeb($ads_list, $my_data, $ad_amount)) {
+
+
+        if (chack_list::chack_down_njeeb($ads_list, $my_data, $my_ad_data)) {
             //Ad price need to incress
-            proces::change_price($ads_list, $my_ad_data, $my_data, $ad_amount);
-            return  "ad price increesed from " . $my_ad_data["price"] . " to " . git_data::new_price(git_data::enemy_ad($ads_list, $my_data, $ad_amount));
+            proces::change_price($ads_list, $my_ad_data, $my_data);
+            return  "ad price increesed from " . $my_ad_data["price"] . " to " . git_data::new_price($my_data, git_data::enemy_ad($ads_list, $my_data, $my_ad_data));
         }
-        if (chack_list::chack_the_best($ads_list, $my_data, $ad_amount)) {
+        if (chack_list::chack_the_best($ads_list, $my_data, $my_ad_data)) {
             return  "ad have best price";
         }
         return  "test";

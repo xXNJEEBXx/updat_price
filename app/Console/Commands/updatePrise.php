@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Console\Command;
 use App\Http\Controllers\ApiController;
 use App\Http\Controllers\track_controller;
+use App\Http\Controllers\progress_orders;
 
 
 class updatePrise extends Command
@@ -44,26 +45,49 @@ class updatePrise extends Command
      */
     public function handle()
     {
-        $req1 = ["secands" => 0, "last_req" => null];
-        $req2 = ["secands" => 0, "last_req" => null];
-        $req3 = ["secands" => 0, "last_req" => null];
+
+        $commands =
+            [
+                //--------------choce_best_price-------------------
+                //---sell
+                ["name" => "SELL BTC AD", "price_multiplied" => 1.015, "id" => "11496911875305992192", "price_type" => "auto", "asset" => "BTC", "fiat" => "USD", "track_type" => "choce_best_price", "trade_type" => "SELL", "payTypes" => "Wise"],
+                ["name" => "SELL USDT AD", "price_multiplied" => 1.011, "id" => "11489302371517079552", "price_type" => "auto", "asset" => "USDT", "fiat" => "USD", "track_type" => "choce_best_price", "trade_type" => "SELL",  "payTypes" => "Wise"],
+                // //---BUY
+                ["name" => "BUY USDT AD", "price_multiplied" => 1.008, "id" => "11506316506589458432", "price_type" => "auto", "asset" => "USDT", "fiat" => "USD", "track_type" => "choce_best_price", "trade_type" => "BUY", "max_amount" => 200, "payTypes" => "Wise"],
+
+
+                //--------------good_dule-------------------------
+                //---BUY
+                ["name" => "BUY BTC track", "price_multiplied" => 1.005, "price" => 113998, "asset" => "BTC", "fiat" => "USD", "track_type" => "good_dule", "max_amount" => 50, "buy_the_lowist" => true, "payTypes" => "Wise", "price_type" => "auto", "trade_type" => "BUY"],
+                ["name" => "BUY USDT track", "price_multiplied" => 1.007, "price" => 113998, "asset" => "USDT", "fiat" => "USD", "track_type" => "good_dule", "max_amount" => 200, "payTypes" => "Wise", "price_type" => "auto", "trade_type" => "BUY"],
+                //---SELL
+                ["name" => "SELL BTC track", "price_multiplied" => 1.034, "price" => 113998, "asset" => "BTC", "fiat" => "USD", "track_type" => "good_dule", "payTypes" => "Wise", "price_type" => "auto", "trade_type" => "SELL"],
+                ["name" => "SELL USDT track", "price_multiplied" => 1.013, "price" => 113998, "asset" => "USDT", "fiat" => "USD", "track_type" => "good_dule", "payTypes" => "Wise", "price_type" => "auto", "trade_type" => "SELL"],
+
+
+                //--------------pading_ads-------------------------
+                ["name" => "chack progress orders", "track_type" => "pading_ads"]
+            ];
         while (1) {
             $time = microtime(true);
+            for ($i = 0; $i < count($commands); $i++) {
+                if (!isset($commands[$i]["req_info"])) {
+                    $commands[$i]["req_info"] = ["secands" => 0, "last_req" => null];
+                }
+                if ($time >= $commands[$i]["req_info"]["secands"]) {
+                    $commands[$i]["req_info"] = $this->make_req($commands[$i]);
+                }
+            }
+
+
+
+
             // if ($time >= $req1["secands"]) {
-            //     $req1 = $this->make_req(["id" => "11329712394179661824", "price" => 113998, "last_req" => $req1["last_req"], "asset" => "BTC", "fiat" => "SAR", "track_type" => "choce_best_price", "trade_way" => "BUY"]);
+            //     $price_multiplied = 1.013;
+            //     $req1 = $this->make_req(["name" => "BUY USD AD", "id" => "11496463075974729728", "price_type" => "auto", "price_multiplied" => $price_multiplied, "price" => 113998, "last_req" => $req1["last_req"], "asset" => "BTC", "fiat" => "USD", "track_type" => "choce_best_price", "trade_type" => "BUY"]);
             // }
 
-            if ($time >= $req2["secands"]) {
-                $price_multiplied = 1.007;
-                $req2 = $this->make_req(["name" => "BUY BTC track", "price" => 113998, "last_req" => $req2["last_req"], "asset" => "BTC", "fiat" => "USD", "track_type" => "good_dule", "payTypes" => "Wise", "price_type" => "auto", "trade_type" => "BUY", "price_multiplied" => $price_multiplied]);
-            }
-            if ($time >= $req3["secands"]) {
-                $price_multiplied = 1.013;
-                $req3 = $this->make_req(["name" => "SELL USDT track", "price" => 113998, "last_req" => $req3["last_req"], "asset" => "USDT", "fiat" => "USD", "track_type" => "good_dule", "payTypes" => "Wise", "price_type" => "auto", "trade_type" => "SELL", "price_multiplied" => $price_multiplied]);
-            }
-            // if ($time >= $req2["secands"]) {
-            //     $req2 = $this->make_req("11464719677996802048", 6998, $req2["last_req"], "ETH", "SAR");
-            // }
+
             sleep(6);
         }
         return Command::SUCCESS;
@@ -79,11 +103,13 @@ class updatePrise extends Command
             $req = $trackController->track_orders($data);
         }
 
-        // 11464719677996802048
-        if ($req != $data["last_req"]) {
-            // $last_req = $req;
-            echo ($data["name"] . ":" . $req);
-            echo ("\n");
+        if ($data["track_type"] == "pading_ads") {
+            $progressController = new progress_orders;
+            $req = $progressController->chack_orders($data);
+        }
+
+        if ($req != $data["req_info"]["last_req"]) {
+            echo ($data["name"] . ":" . $req . "\n");
             // info($req);
         }
         $secands = microtime(true);
@@ -96,8 +122,20 @@ class updatePrise extends Command
         if ($req == "You need to log in") {
             $secands = $secands + 60;
         }
+        if ($req == "all ads bad") {
+            $secands = $secands + 400;
+        }
+        if ($req == "max_amount is out of amount") {
+            $secands = $secands + 4000;
+        }
         if ($req == "ad out of amount") {
             $secands = $secands + 120;
+        }
+        if ($req == "New order opened") {
+            $secands = $secands + 75;
+        }
+        if ($req == "no orders to chack") {
+            $secands = $secands + 75;
         }
 
         return ["secands" => $secands, "last_req" => $req];

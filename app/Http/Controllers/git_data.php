@@ -6,12 +6,57 @@ use Illuminate\Support\Facades\Http;
 use App\Models\cookie;
 use App\Models\status;
 use Illuminate\Http\Request;
+use Illuminate\Database\QueryException;
+use Illuminate\Http\Client\ConnectionException;
+use GuzzleHttp\Exception\RequestException;
+use Carbon\Carbon;
+
 
 class git_data extends Controller
 {
+
+    static function catch_errors($callback)
+    {
+        do {
+            try {
+                $falg = false;
+                $res = $callback();
+            }
+            //catch exception
+            catch (QueryException $error) {
+                if (!isset($error_alarm)) {
+                    $error_alarm = true;
+                    echo "QueryException error \n";
+                }
+                $falg = true;
+                sleep(2);
+            } catch (ConnectionException $error) {
+                if (!isset($error_alarm)) {
+                    $error_alarm = true;
+                    echo "ConnectionExceptiong error \n";
+                }
+                $falg = true;
+                sleep(2);
+            } catch (RequestException $error) {
+                if (!isset($error_alarm)) {
+                    $error_alarm = true;
+                    echo "RequestException error \n";
+                }
+                $falg = true;
+                sleep(2);
+            }
+        } while ($falg);
+
+        return $res;
+    }
     static function heders()
     {
-        $cookies = cookie::all()->first();
+
+        $cookies = self::catch_errors(function () {
+            return cookie::all()->first();
+        });
+
+
         return [
             'authority' => 'p2p.binance.com',
             'accept' => '*/*',
@@ -40,25 +85,36 @@ class git_data extends Controller
     }
     static function ads_data()
     {
-        $ads_data = Http::withHeaders(
-            self::heders()
-        )->post("https://p2p.binance.com/bapi/c2c/v2/private/c2c/adv/list-by-page", ['inDeal' => 1, 'rows' => 10, 'page' => 1]);
+        $ads_data = self::catch_errors(function () {
+            return Http::withHeaders(
+                self::heders()
+            )->post("https://p2p.binance.com/bapi/c2c/v2/private/c2c/adv/list-by-page", ['inDeal' => 1, 'rows' => 10, 'page' => 1]);
+        });
+
         return $ads_data;
     }
     static function ads_list($my_data)
     {
+        if ($my_data["track_type"] == "choce_best_price") {
+            $my_data["trade_type"] = $my_data["trade_type"] == "SELL" ? "BUY" : "SELL";
+        }
         $payTypes = [];
         if (isset($my_data["payTypes"]) > 0) {
             array_push($payTypes, $my_data["payTypes"]);
         }
 
-        $ads_list = Http::withHeaders(self::heders())->post("https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search", ["page" => 1, "rows" => 10, "payTypes" => $payTypes, "countries" => [], "asset" => $my_data["asset"], "tradeType" => $my_data["trade_type"], "fiat" => $my_data["fiat"], "publisherType" => null]);
+        $ads_list = self::catch_errors(function () use (&$payTypes, &$my_data) {
+            return  Http::withHeaders(self::heders())->post("https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search", ["page" => 1, "rows" => 10, "payTypes" => $payTypes, "countries" => [], "asset" => $my_data["asset"], "tradeType" => $my_data["trade_type"], "fiat" => $my_data["fiat"], "proMerchantAds" => false, "publisherType" => null]);
+        });
         return $ads_list["data"];
     }
 
-    static function change_price_req($enemy_ad, $my_ad_data)
+    static function change_price_req($enemy_ad, $my_ad_data, $my_data)
     {
-        Http::withHeaders(self::heders())->post("https://p2p.binance.com/bapi/c2c/v2/private/c2c/adv/update", self::paylode_for_change_price($enemy_ad, $my_ad_data));
+        self::paylode_for_change_price($enemy_ad, $my_ad_data, $my_data);
+        self::catch_errors(function () use ($enemy_ad, $my_ad_data, $my_data) {
+            Http::withHeaders(self::heders())->post("https://p2p.binance.com/bapi/c2c/v2/private/c2c/adv/update", self::paylode_for_change_price($enemy_ad, $my_ad_data, $my_data));
+        });
     }
 
     static function ad_data($ads_data, $my_data)
@@ -70,30 +126,42 @@ class git_data extends Controller
         }
     }
 
-    static function enemy_ad($ads_list, $my_data, $ad_amount)
+    static function enemy_ad($ads_list, $my_data, $my_ad_data)
     {
         foreach ($ads_list as $ad_data) {
-            if (chack_list::chack_ad($ad_data, $my_data["price"], $ad_amount)) {
+            if (chack_list::chack_ad($ad_data, $my_data, $my_ad_data)) {
                 return $ad_data;
             }
         }
     }
 
-    static function new_price($enemy_ad)
+    static function new_price($my_data, $enemy_ad)
     {
-        return $enemy_ad["adv"]["price"] - 0.01;
+        return $enemy_ad["adv"]["price"] + proces::difference_value($my_data);
     }
 
-    static function paylode_for_change_price($enemy_ad, $my_ad_data)
+    static function paylode_for_change_price($enemy_ad, $my_ad_data, $my_data)
     {
-        $paylode = ["asset" => $my_ad_data["asset"], "fiatUnit" => $my_ad_data["fiatUnit"], "priceType" => $my_ad_data["priceType"], "fiatScale" => $my_ad_data["fiatScale"], "assetScale" => $my_ad_data["assetScale"], "priceScale" => $my_ad_data["priceScale"], "advNo" => $my_ad_data["advNo"], "autoReplyMsg" => $my_ad_data["autoReplyMsg"], "initAmount" => $my_ad_data["initAmount"], "payTimeLimit" => $my_ad_data["payTimeLimit"], "price" => self::new_price($enemy_ad), "priceFloatingRatio" => $my_ad_data["priceFloatingRatio"], "minSingleTransAmount" => $my_ad_data["minSingleTransAmount"], "maxSingleTransAmount" => $my_ad_data["maxSingleTransAmount"], "remarks" => $my_ad_data["remarks"], "tradeMethods" => $my_ad_data["tradeMethods"], "tradeType" => $my_ad_data["tradeType"]];
+
+        $paylode = ["advNo" => $my_ad_data["advNo"], "asset" => $my_ad_data["asset"], "assetScale" => $my_ad_data["assetScale"], "autoReplyMsg" => $my_ad_data["autoReplyMsg"], "buyerBtcPositionLimit" => $my_ad_data["buyerBtcPositionLimit"], "buyerRegDaysLimit" => $my_ad_data["buyerRegDaysLimit"], "fiatScale" => $my_ad_data["fiatScale"], "fiatUnit" => $my_ad_data["fiatUnit"], "initAmount" => self::total_initAmount($enemy_ad, $my_ad_data, $my_data), "launchCountry" => $my_ad_data["launchCountry"], "maxSingleTransAmount" => $my_ad_data["maxSingleTransAmount"], "minSingleTransAmount" => $my_ad_data["minSingleTransAmount"], "payTimeLimit" => $my_ad_data["payTimeLimit"], "price" => self::new_price($my_data, $enemy_ad), "priceFloatingRatio" => $my_ad_data["priceFloatingRatio"], "priceScale" => $my_ad_data["priceScale"], "priceType" => $my_ad_data["priceType"], "remarks" => $my_ad_data["remarks"], "tradeMethods" => $my_ad_data["tradeMethods"], "tradeType" => $my_ad_data["tradeType"]];
         return $paylode;
     }
+    static function total_initAmount($enemy_ad, $my_ad_data, $my_data)
+    {
+        if ($my_data["trade_type"] == "BUY") {
+            $my_data["crupto_amount"] = $my_data["track_amount"] / self::new_price($my_data, $enemy_ad);
+            $my_data["crupto_amount"] += $my_data["free_amount"];
+        }
 
-
+        if ($my_ad_data["asset"] == "USDT") {
+            return  round($my_data["crupto_amount"], 2, PHP_ROUND_HALF_DOWN);
+        } else {
+            return  round($my_data["crupto_amount"], 8, PHP_ROUND_HALF_DOWN);
+        }
+    }
     static function ad_amount($my_ad_data)
     {
-        return $my_ad_data["tradableQuantity"] * $my_ad_data["price"];
+        return   round($my_ad_data["tradableQuantity"] * $my_ad_data["price"], 2, PHP_ROUND_HALF_DOWN);
     }
 
 
@@ -166,25 +234,30 @@ class git_data extends Controller
         }
     }
     //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@track orders& closes orders@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    static function processing_orders()
-    {
-        $processing_ads_list = Http::withHeaders(self::heders())->post("https://p2p.binance.com/bapi/c2c/v2/private/c2c/order-match/order-list", ["page" => 1, "rows" => 10, "orderStatusList" => [0, 1, 2, 3, 5]]);
-        return $processing_ads_list;
-    }
+
     static function git_track_data()
     {
-        $data = status::where('name', "track_amount")->first();
+
+        $data = self::catch_errors(function () {
+            return status::where('name', "track_amount")->first();
+        });
         if ($data == null) {
             $track_table = new  status;
             $track_table->name = "track_amount";
             $track_table->value = 0;
-            $track_table->save();
+            self::catch_errors(function () use ($track_table) {
+                $track_table->save();
+            });
             $track_table = new  status;
             $track_table->name = "track_status";
             $track_table->value = 0;
-            $track_table->save();
+            self::catch_errors(function () use ($track_table) {
+                $track_table->save();
+            });
         } else {
-            $data3 = status::where('name', "track_status")->first();
+            $data3 = self::catch_errors(function () {
+                return  status::where('name', "track_status")->first();
+            });
             return ["amount" => $data["value"], "status" => $data3["value"]];
         }
     }
@@ -199,7 +272,9 @@ class git_data extends Controller
 
     static function orginal_price($my_data)
     {
-        $data = Http::withHeaders(self::heders())->get("https://www.binance.com/bapi/composite/v1/public/marketing/symbol/list");
+        $data = self::catch_errors(function () {
+            return Http::withHeaders(self::heders())->get("https://www.binance.com/bapi/composite/v1/public/marketing/symbol/list");
+        });
         foreach ($data["data"] as $element) {
             if ($element["name"] == $my_data["asset"]) {
                 $my_data["price"] = $element["price"] * $my_data["price_multiplied"];
@@ -211,10 +286,11 @@ class git_data extends Controller
 
     static function traked_ad($my_data, $ads_list)
     {
-        $data2 = status::where('name', "track_amount")->first();
         foreach ($ads_list as $ad) {
             if (chack_list::chack_ad_for_track($my_data, $ad)) {
-                $traked_ad = Http::withHeaders(self::heders())->get("https://p2p.binance.com/bapi/c2c/v2/public/c2c/adv/selected-adv/" . $ad["adv"]["advNo"]);
+                $traked_ad = self::catch_errors(function () use ($ad) {
+                    return  Http::withHeaders(self::heders())->get("https://p2p.binance.com/bapi/c2c/v2/public/c2c/adv/selected-adv/" . $ad["adv"]["advNo"]);
+                });
                 return $traked_ad["data"];
             }
         }
@@ -223,7 +299,9 @@ class git_data extends Controller
     static function open_order_req($my_data, $traked_ad)
     {
         print_r(self::paylode_for_open_order($my_data, $traked_ad));
-        Http::withHeaders(self::heders())->post("https://p2p.binance.com/bapi/c2c/v2/private/c2c/order-match/makeOrder", self::paylode_for_open_order($my_data, $traked_ad));
+        self::catch_errors(function () use ($my_data, $traked_ad) {
+            Http::withHeaders(self::heders())->post("https://p2p.binance.com/bapi/c2c/v2/private/c2c/order-match/makeOrder", self::paylode_for_open_order($my_data, $traked_ad));
+        });
     }
 
     static function paylode_for_open_order($my_data, $traked_ad)
@@ -240,22 +318,22 @@ class git_data extends Controller
 
     static function total_amount($my_data, $traked_ad)
     {
-        if ($my_data["trade_type"] == "BUY") {
-            $buy_amount = ($my_data["orginal_price"] * $my_data["track_amount"]) / $traked_ad["adv"]["price"];
-        } else {
-            $buy_amount = $my_data["track_amount"] * $traked_ad["adv"]["price"];
-        }
+        $buy_amount = ($my_data["orginal_price"] * $my_data["track_amount"]) / $traked_ad["adv"]["price"];
         if ($buy_amount >= self::MSA($traked_ad)) {
             $amount = self::MSA($traked_ad);
         } else {
             $amount = $buy_amount;
+        }
+        if (isset($my_data["buy_the_lowist"]) && $my_data["buy_the_lowist"]) {
+            if ($amount > $traked_ad["adv"]["minSingleTransAmount"]) {
+                $amount = $traked_ad["adv"]["minSingleTransAmount"];
+            }
         }
         return round($amount, 2, PHP_ROUND_HALF_DOWN);
     }
 
     static function selled_amount($my_data, $traked_ad)
     {
-
         $buy_amount = ($my_data["orginal_price"] * $my_data["track_amount"]) / $traked_ad["adv"]["price"];
         if ($buy_amount >= self::MSA($traked_ad)) {
 
@@ -278,7 +356,9 @@ class git_data extends Controller
 
     static function send_massge($telegram_massge)
     {
-        Http::withHeaders(self::heders())->get("https://api.telegram.org/bot5546910942:AAFWrAYCeosx1x3x2K9HE5tpKagTwE-M0bI/sendMessage?chat_id=438631667,&text=" . $telegram_massge);
+        self::catch_errors(function () use ($telegram_massge) {
+            Http::withHeaders(self::heders())->get("https://api.telegram.org/bot5546910942:AAFWrAYCeosx1x3x2K9HE5tpKagTwE-M0bI/sendMessage?chat_id=438631667,&text=" . $telegram_massge);
+        });
     }
 
     static function MSA($traked_ad)
@@ -292,18 +372,108 @@ class git_data extends Controller
 
     static function track_amount($my_data)
     {
+        //may need to convert to sar
         $my_amount =  0;
+        $my_data["free_amount"] = 0;
+        $wallet_amount = self::git_wallet_amount();
         if ($my_data["trade_type"] == "BUY") {
-            $track_table = status::where('name', "track_amount")->first();
-            $my_amount = $track_table["value"];
+            $my_data = self::set_track_buy_amount($my_data);
+            $my_data = self::set_progress_orders_amount($my_data);
         } else {
-            $wallet_amount = Http::withHeaders(self::heders())->post("https://www.binance.com/bapi/asset/v3/private/asset-service/asset/get-ledger-asset", ["needBtcValuation" => true, "quoteAsset" => "BTC"]);
-            foreach ($wallet_amount["data"] as $crupto) {
-                if ($crupto["asset"] == $my_data["asset"]) {
-                    $my_amount =  $crupto["free"];
+            //Sell
+            $my_data = self::set_free_amount_and_track_amount($my_data, $wallet_amount);
+        }
+        $my_data = self::set_max_amount($my_data, $wallet_amount);
+        $my_data["track_amount"] = round($my_data["track_amount"], 2, PHP_ROUND_HALF_DOWN);
+        return $my_data;
+    }
+    static function set_track_buy_amount($my_data)
+    {
+        $track_table = self::catch_errors(function () {
+            return   status::where('name', "track_amount")->first();
+        });
+        $my_data["track_amount"] = $track_table["value"];
+        return $my_data;
+    }
+    static function git_wallet_amount()
+    {
+        return self::catch_errors(function () {
+            return  Http::withHeaders(self::heders())->post("https://www.binance.com/bapi/asset/v3/private/asset-service/asset/get-ledger-asset", ["needBtcValuation" => true, "quoteAsset" => "BTC"]);
+        });
+    }
+
+    static function set_free_amount_and_track_amount($my_data, $wallet_amount)
+    {
+        foreach ($wallet_amount["data"] as $crupto) {
+            if ($crupto["asset"] == $my_data["asset"]) {
+                //convert crupto to usd amount
+                if (isset($my_data["track_amount"])) {
+                    $my_data["track_amount"] += $crupto["free"] * $my_data["orginal_price"];
+                } else {
+                    $my_data["track_amount"] = $crupto["free"] * $my_data["orginal_price"];
                 }
+                $my_data["free_amount"] = $crupto["free"];
+                return $my_data;
             }
         }
-        return $my_amount;
+    }
+
+    static function set_max_amount($my_data, $wallet_amount)
+    {
+        if (isset($my_data["max_amount"])) {
+            foreach ($wallet_amount["data"] as $crupto) {
+                if ($crupto["asset"] == $my_data["asset"]) {
+                    $my_data["free_amount"] = $crupto["free"];
+                    $my_data["max_amount"] -= ($crupto["free"] + $crupto["freeze"]) * $my_data["orginal_price"];
+                }
+            }
+            if ($my_data["track_amount"] > $my_data["max_amount"]) {
+                $my_data["track_amount"] = $my_data["max_amount"];
+            }
+        }
+        return $my_data;
+    }
+
+    static function set_progress_orders_amount($my_data)
+    {
+
+        $progress_orders = self::progress_orders();
+        foreach ($progress_orders as $order) {
+            if ($order["tradeType"] == "BUY") {
+                $my_data["track_amount"] += $order["totalPrice"];
+            }
+        }
+
+        return $my_data;
+    }
+
+    static function full_orders($orderStatusList, $tradetype)
+    {
+        $GMT_time = time() - (3600 * 3);
+        $end_time = (((($GMT_time - ($GMT_time % 86400)) + 86400 * 1) - (3600 * 3)) * 1000) - 1;
+        $start_time = (($end_time + 1) - 86400 * 1000);
+        $carbon = Carbon::createFromTimestamp($start_time / 1000);
+        $start_time = $carbon->subMonths(3);
+        $start_time = strtotime($start_time) * 1000;
+        $full_orders = self::catch_errors(function () use ($start_time, $end_time, $orderStatusList, $tradetype) {
+            return Http::withHeaders(self::heders())->post("https://p2p.binance.com/bapi/c2c/v1/private/c2c/order-match/order-list-archived-involved", ["page" => 1, "rows" => 10, "orderStatusList" => $orderStatusList, "startDate" => $start_time, "endDate" => $end_time, "tradeType" => $tradetype]);
+        });
+        return $full_orders["data"];
+    }
+
+
+
+
+
+    //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ progress_orders @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+
+    static function progress_orders()
+    {
+        $processing_ads_list = self::catch_errors(function () {
+            return Http::withHeaders(self::heders())->post("https://p2p.binance.com/bapi/c2c/v2/private/c2c/order-match/order-list", ["page" => 1, "rows" => 10, "orderStatusList" => [0, 1, 2, 3, 5]]);
+        });
+
+        return $processing_ads_list["data"];
     }
 }

@@ -14,13 +14,24 @@ class track_controller extends Controller
         if ($ads_data->status() !== 200) {
             return  "You need to log in";
         }
+        proces::update_amount($my_data);
         $my_data = chack_list::price_type_and_amount($my_data);
-
         $ads_list = git_data::ads_list($my_data);
+
+
+        if (chack_list::chack_max_amount($my_data)) {
+            return  "max amount is out of amount";
+        }
+
         if (chack_list::chack_ads($my_data, $ads_list)) {
-            proces::make_order($my_data, $ads_list);
-            return "New order opened";
+            if (chack_list::chack_multiple_orders()) {
+                return "stop opens orders";
+            } else {
+                proces::make_order($my_data, $ads_list);
+                return "New order opened";
+            }
         };
+
         return "Thare is no good price";
     }
 
@@ -43,12 +54,12 @@ class track_controller extends Controller
             $track_table1->name = "track_amount";
             $track_table1->value = $my_data["amount"];
             $track_table1->save();
-            $track_table2 = status::where('name', "track_price")->first();
-            $track_table2->name = "track_price";
-            $track_table2->value = $my_data["price"];
-            $track_table2->save();
+            // $track_table2 = status::where('name', "track_price")->first();
+            // $track_table2->name = "track_price";
+            // $track_table2->value = $my_data["price"];
+            // $track_table2->save();
         }
-        return ["amount" => $track_table1->value, "price" => $track_table2->value];
+        return ["amount" => $track_table1->value/*, "price" => $track_table2->value*/];
     }
 
     public function post_track_status(Request $my_data)
