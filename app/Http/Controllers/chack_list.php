@@ -22,11 +22,12 @@ class chack_list extends Controller
     static function chack_ad($ad, $my_data, $my_ad_data)
     {
         if ($my_ad_data["tradeType"] == "BUY") {
-            if ($ad["adv"]["price"] > $my_data["price"]) {
+            if (round($ad["adv"]["price"], 8) > round($my_data["price"], 8)) {
+
                 return false;
             }
         } else {
-            if ($ad["adv"]["price"] < $my_data["price"]) {
+            if (round($ad["adv"]["price"], 8) < round($my_data["price"], 8)) {
                 return false;
             }
         }
@@ -47,9 +48,11 @@ class chack_list extends Controller
         return true;
     }
 
+
     static function chack_full_list($ads_list, $my_data, $my_ad_data)
     {
         foreach ($ads_list as $ad) {
+
             if (self::chack_ad($ad, $my_data, $my_ad_data)) {
                 return false;
             }
@@ -59,7 +62,7 @@ class chack_list extends Controller
 
     static function chack_amount($my_data)
     {
-        if ($my_data["asset"] == "USDT") {
+        if ($my_data["asset"] == "USDT" || $my_data["asset"] == "BUSD") {
             if ($my_data["crupto_amount"] < 100) {
                 return true;
             }
@@ -114,7 +117,9 @@ class chack_list extends Controller
         for ($i = 0; $i < sizeof($ads_list); $i++) {
             if ($flag) {
                 if (self::chack_ad($ads_list[$i], $my_data, $my_ad_data)) {
-                    if (round($ads_list[$i]["adv"]["price"] + proces::difference_value($my_data), proces::difference_index($my_data)) == round($ads_list[$NJEEB]["adv"]["price"], 2)) {
+                    $num1 = round($ads_list[$i]["adv"]["price"] + proces::difference_value($my_data), proces::difference_index($my_data));
+                    $num2 = round($ads_list[$NJEEB]["adv"]["price"], proces::difference_index($my_data));
+                    if ($num1 == $num2) {
                         return false;
                     } else {
                         return true;
@@ -201,6 +206,7 @@ class chack_list extends Controller
     static function price_type_and_amount($my_data)
     {
         if ($my_data["price_type"] == "auto") {
+
             $my_data = git_data::orginal_price($my_data);
         }
         $my_data = git_data::track_amount($my_data);
@@ -212,16 +218,6 @@ class chack_list extends Controller
         $progress_orders = git_data::progress_orders();
         if (count($progress_orders) >= 2) {
             return true;
-        }
-        return false;
-    }
-
-    static function chack_progress_orders($progress_orders, $finshed_orders)
-    {
-        foreach ($progress_orders as $order) {
-            if (proces::array_any($finshed_orders, $order["orderNumber"])) {
-                return true;
-            }
         }
         return false;
     }

@@ -111,9 +111,8 @@ class git_data extends Controller
 
     static function change_price_req($enemy_ad, $my_ad_data, $my_data)
     {
-        self::paylode_for_change_price($enemy_ad, $my_ad_data, $my_data);
-        self::catch_errors(function () use ($enemy_ad, $my_ad_data, $my_data) {
-            Http::withHeaders(self::heders())->post("https://p2p.binance.com/bapi/c2c/v2/private/c2c/adv/update", self::paylode_for_change_price($enemy_ad, $my_ad_data, $my_data));
+        $res = self::catch_errors(function () use ($enemy_ad, $my_ad_data, $my_data) {
+            return  Http::withHeaders(self::heders())->post("https://p2p.binance.com/bapi/c2c/v2/private/c2c/adv/update", self::paylode_for_change_price($enemy_ad, $my_ad_data, $my_data));
         });
     }
 
@@ -146,19 +145,27 @@ class git_data extends Controller
         $paylode = ["advNo" => $my_ad_data["advNo"], "asset" => $my_ad_data["asset"], "assetScale" => $my_ad_data["assetScale"], "autoReplyMsg" => $my_ad_data["autoReplyMsg"], "buyerBtcPositionLimit" => $my_ad_data["buyerBtcPositionLimit"], "buyerRegDaysLimit" => $my_ad_data["buyerRegDaysLimit"], "fiatScale" => $my_ad_data["fiatScale"], "fiatUnit" => $my_ad_data["fiatUnit"], "initAmount" => self::total_initAmount($enemy_ad, $my_ad_data, $my_data), "launchCountry" => $my_ad_data["launchCountry"], "maxSingleTransAmount" => $my_ad_data["maxSingleTransAmount"], "minSingleTransAmount" => $my_ad_data["minSingleTransAmount"], "payTimeLimit" => $my_ad_data["payTimeLimit"], "price" => self::new_price($my_data, $enemy_ad), "priceFloatingRatio" => $my_ad_data["priceFloatingRatio"], "priceScale" => $my_ad_data["priceScale"], "priceType" => $my_ad_data["priceType"], "remarks" => $my_ad_data["remarks"], "tradeMethods" => $my_ad_data["tradeMethods"], "tradeType" => $my_ad_data["tradeType"]];
         return $paylode;
     }
+
+
     static function total_initAmount($enemy_ad, $my_ad_data, $my_data)
     {
         if ($my_data["trade_type"] == "BUY") {
             $my_data["crupto_amount"] = $my_data["track_amount"] / self::new_price($my_data, $enemy_ad);
-            $my_data["crupto_amount"] += $my_data["free_amount"];
         }
-
+        $my_data["crupto_amount"] += self::total_transefer_amount($my_ad_data);
+        $my_data["crupto_amount"] = $my_data["crupto_amount"] * 0.999;
         if ($my_ad_data["asset"] == "USDT") {
             return  round($my_data["crupto_amount"], 2, PHP_ROUND_HALF_DOWN);
         } else {
             return  round($my_data["crupto_amount"], 8, PHP_ROUND_HALF_DOWN);
         }
     }
+    static function total_transefer_amount($my_ad_data)
+    {
+        return   $my_ad_data["initAmount"] - $my_ad_data["tradableQuantity"];
+    }
+
+
     static function ad_amount($my_ad_data)
     {
         return   round($my_ad_data["tradableQuantity"] * $my_ad_data["price"], 2, PHP_ROUND_HALF_DOWN);
@@ -272,6 +279,7 @@ class git_data extends Controller
 
     static function orginal_price($my_data)
     {
+
         $data = self::catch_errors(function () {
             return Http::withHeaders(self::heders())->get("https://www.binance.com/bapi/composite/v1/public/marketing/symbol/list");
         });
@@ -475,5 +483,13 @@ class git_data extends Controller
         });
 
         return $processing_ads_list["data"];
+    }
+
+    static function mark_order_as_paid($order)
+    {
+        self::catch_errors(function () use ($order) {
+            Http::withHeaders(self::heders())->post("https://p2p.binance.com/bapi/c2c/v1/private/c2c/order-match/notifyOrderPayed", ["orderNumber" => $order["order_id"], "payId" => $order["pay_id"]]);
+        });
+        return "done";
     }
 }

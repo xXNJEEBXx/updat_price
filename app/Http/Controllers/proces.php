@@ -34,7 +34,7 @@ class proces extends Controller
 
     static function difference_value($my_data)
     {
-        if (($my_data["asset"] == "USDT") && ($my_data["fiat"] = "USD")) {
+        if ((($my_data["asset"] == "USDT") || ($my_data["asset"] == "BUSD")) && ($my_data["fiat"] = "USD")) {
             if ($my_data["trade_type"] == "SELL") {
                 return -0.001;
             } else {
@@ -58,8 +58,9 @@ class proces extends Controller
     }
     static function change_price($ads_list, $my_ad_data, $my_data)
     {
+
         $enemy_ad = git_data::enemy_ad($ads_list, $my_data, $my_ad_data);
-        git_data::change_price_req($enemy_ad, $my_ad_data, $my_data);
+        return git_data::change_price_req($enemy_ad, $my_ad_data, $my_data);
         return "success";
     }
 
@@ -123,23 +124,62 @@ remarks:" . $traked_ad["adv"]["remarks"];
         return $telegram_massge;
     }
 
-    static function send_progress_orders($progress_orders, $finshed_orders)
+    static function send_progress_orders($order)
     {
-        foreach ($progress_orders as $order) {
-            if (proces::array_any($finshed_orders, $order["orderNumber"]) && $order["tradeType"] == "BUY") {
-                $payment = self::git_payment($order);
-                $email = self::git_email($payment);
-                $table = new  progress_order;
-                $table->order_id = $order["orderNumber"];
-                $table->payment = $payment["tradeMethodName"];
-                $table->status = 0;
-                $table->email = $email;
-                $table->value = $order["totalPrice"];
-                $table->save();
-                echo "progress order added\n";
+        $payment = self::git_payment($order);
+        $name = self::git_name($payment);
+        $email = self::git_email($payment);
+        $pay_id = $payment["payMethodId"];
+        $table = new  progress_order;
+        $table->order_id = $order["orderNumber"];
+        $table->payment = $payment["tradeMethodName"];
+        $table->status = 0;
+        $table->binace_name = $name;
+        if (!$email) {
+            $email = "no email";
+        }
+        $table->email = $email;
+        $table->pay_id = $pay_id;
+        $table->value = $order["totalPrice"];
+        $table->save();
+        echo "progress order added\n";
+    }
+
+    static function get_orders_dones($progress_orders, $finshed_progress_orders)
+    {
+        $orders_dones = [];
+        foreach ($finshed_progress_orders as $finshed_order) {
+            $flag = true;
+            foreach ($progress_orders as $order) {
+                if ($order["orderNumber"]  == $finshed_order["order_id"]) {
+                    $flag = false;
+                }
+            }
+            if ($flag) {
+                $orders_dones[] = $finshed_order;
+            }
+        }
+        return $orders_dones;
+    }
+
+    static function update_orders_status($order)
+    {
+        $table = progress_order::where('order_id', $order["order_id"])->first();
+        $table->status = $order["status"];
+        $table->save();
+
+        echo "order closed\n";
+    }
+
+    static function git_name($payment)
+    {
+        foreach ($payment["fields"] as $field) {
+            if ($field["fieldName"]  == "Name") {
+                return $field["fieldValue"];
             }
         }
     }
+
 
     static function git_payment($order)
     {
@@ -157,5 +197,69 @@ remarks:" . $traked_ad["adv"]["remarks"];
                 return $field["fieldValue"];
             }
         }
+    }
+
+    static function orders_need_to_store_it($progress_orders, $finshed_progress_orders)
+    {
+        $orders_need_to_store_it = [];
+        foreach ($progress_orders as $order) {
+            $flag = true;
+            foreach ($finshed_progress_orders as $finshed_order) {
+                if ($order["orderNumber"]  == $finshed_order["order_id"]) {
+                    $flag = false;
+                }
+            }
+            if ($flag) {
+                $orders_need_to_store_it[] = $order;
+            }
+        }
+        return $orders_need_to_store_it;
+    }
+
+    static function orders_finshed($progress_orders, $finshed_progress_orders)
+    {
+        $orders_need_to_store_it = [];
+        foreach ($progress_orders as $order) {
+            $flag = false;
+            foreach ($finshed_progress_orders as $finshed_order) {
+                if ($order["orderNumber"]  == $finshed_order["order_id"]) {
+                    $flag = true;
+                }
+            }
+            if ($flag) {
+                $orders_need_to_store_it[] = $order;
+            }
+        }
+        return $orders_need_to_store_it;
+    }
+
+    static function real_progress_orders($progress_orders, $finshed_progress_orders)
+    {
+        $real_progress_orders = [];
+        foreach ($finshed_progress_orders as $finshed_order) {
+            $flag = false;
+            foreach ($progress_orders as $order) {
+                if ($order["orderNumber"]  == $finshed_order["order_id"]) {
+                    $flag = true;
+                }
+            }
+            if ($flag) {
+                $real_progress_orders[] = $order;
+            }
+        }
+        return $real_progress_orders;
+    }
+
+    static function get_finshed_progress_orders()
+    {
+        $finshed_progress_orders = progress_order::all();
+        $finshed_progress_orders_array = [];
+
+        foreach ($finshed_progress_orders as $finshed_order) {
+            if ($finshed_order->status != 1) {
+                $finshed_progress_orders_array[] = $finshed_order;
+            }
+        }
+        return $finshed_progress_orders_array;
     }
 }

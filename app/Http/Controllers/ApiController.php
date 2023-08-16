@@ -21,6 +21,7 @@ class ApiController extends Controller
 
     public function changprics($my_data)
     {
+        // $my_data = ["name" => "SELL USDT AD", "price_multiplied" => 1.005, "id" => "11489302371517079552", "price_type" => "auto", "asset" => "USDT", "fiat" => "USD", "track_type" => "choce_best_price", "trade_type" => "SELL",  "payTypes" => "Wise"];
         // $_g2fa = new Google2FA();
         // $current_otp = $_g2fa->getCurrentOtp("2AWQVM2FJTTCIFEI7T7STBSPYVZXFOL6");
         // echo $current_otp;
@@ -30,7 +31,6 @@ class ApiController extends Controller
 
         $ads_list = git_data::ads_list($my_data);
         $ads_data = git_data::ads_data();
-
 
         if ($ads_data->status() !== 200) {
             return "You need to log in";
@@ -64,7 +64,6 @@ class ApiController extends Controller
             proces::change_price($ads_list, $my_ad_data, $my_data);
             return  "ad price reduction from " . $my_ad_data["price"] . " to " . git_data::new_price($my_data, git_data::enemy_ad($ads_list, $my_data, $my_ad_data));
         }
-
 
         if (chack_list::chack_down_njeeb($ads_list, $my_data, $my_ad_data)) {
             //Ad price need to incress

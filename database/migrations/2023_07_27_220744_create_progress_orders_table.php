@@ -16,10 +16,16 @@ class CreateProgressOrdersTable extends Migration
     {
         Schema::create('progress_orders', function (Blueprint $table) {
             $table->increments('id');
+            $table->string('type')->nullable();
             $table->string('order_id')->nullable();
             $table->string('payment')->nullable();
             $table->integer('status')->nullable();
             $table->string('email')->nullable();
+            $table->string('pay_id')->nullable();
+            $table->string('currency')->nullable();
+            $table->string('binace_nickname')->nullable();
+            $table->string('binace_name')->nullable();
+            $table->string('wise_name')->nullable();
             $table->float('value')->nullable();
             $table->timestamps();
         });
