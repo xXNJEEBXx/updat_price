@@ -7,6 +7,8 @@ use App\Models\sms_notification;
 use Illuminate\Http\Request;
 use Telegram\Bot\Laravel\Facades\Telegram;
 use Carbon\Carbon;
+//Google2FA
+use PragmaRX\Google2FA\Google2FA;
 
 class progress_orders extends Controller
 {
@@ -17,7 +19,9 @@ class progress_orders extends Controller
             return  "You need to log in";
         }
         $finshed_progress_orders = proces::get_finshed_progress_orders();
-        $progress_orders = git_data::progress_orders();
+
+        $progress_orders = git_data::get_progress_orders();
+
 
         do {
             $orders_need_to_store_it = proces::orders_need_to_store_it($progress_orders, $finshed_progress_orders);
@@ -43,6 +47,13 @@ class progress_orders extends Controller
         foreach ($finshed_progress_orders as $order) {
             if ($order->status == 2) {
                 echo "wroung email\n";
+                $massege = "Thare is wrong email for the order id=" . $order["order_id"] . " amount=" . $order["value"];
+                Telegram::sendMessage([
+                    'chat_id' => "438631667",
+                    'text' => $massege
+                ]);
+                $order["status"] = 7;
+                proces::update_orders_status($order);
             }
             if ($order->status == 3) {
                 self::telgram_send_Validat_massge($order, $updates);
@@ -160,13 +171,13 @@ wise name :" . $order["wise_name"];
         return "no progress order";
     }
 
-    public function update_progress_order(Request $my_data)
+    public function update_progress_order(Request $order)
     {
-        $my_data = $my_data->json()->all();
-        $finshed_progress_orders = progress_order::where('order_id', $my_data["order"]["order_id"])->get()->first();
-        $finshed_progress_orders->status = $my_data["order"]["status"];
-        if (isset($my_data["order"]["wise_name"])) {
-            $finshed_progress_orders->wise_name = $my_data["order"]["wise_name"];
+        $order = $order->json()->all();
+        $finshed_progress_orders = progress_order::where('order_id', $order["order_id"])->get()->first();
+        $finshed_progress_orders->status = $order["status"];
+        if (isset($order["wise_name"])) {
+            $finshed_progress_orders->wise_name = $order["wise_name"];
         }
         $finshed_progress_orders->save();
         return ["data" => "orders update successfully"];
@@ -203,6 +214,12 @@ wise name :" . $order["wise_name"];
             }
         }
         return "no sms massage yet";
+    }
+    public function git_wise_login_otp()
+    {
+        $_g2fa = new Google2FA();
+        $current_otp = $_g2fa->getCurrentOtp("BMAUAAWP2ZLPBYGMKO2GAZP6FMJCMRQQ");
+        return ["data" => $current_otp];
     }
 
     public function git_orders_for_wise()

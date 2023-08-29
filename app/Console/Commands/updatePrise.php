@@ -61,9 +61,9 @@ class updatePrise extends Command
                 ["name" => "BUY BTC track", "price_multiplied" => 1.005, "asset" => "BTC", "fiat" => "USD", "track_type" => "good_dule", "max_amount" => 50, "buy_the_lowist" => true, "payTypes" => "Wise", "price_type" => "auto", "trade_type" => "BUY"],
                 ["name" => "BUY USDT track", "price_multiplied" => 1.005, "asset" => "USDT", "fiat" => "USD", "track_type" => "good_dule", "max_amount" => 1000, "buy_the_lowist" => true, "payTypes" => "Wise", "price_type" => "auto", "trade_type" => "BUY"],
                 ["name" => "BUY BUSD track", "price_multiplied" => 1.005, "asset" => "BUSD", "fiat" => "USD", "track_type" => "good_dule", "max_amount" => 100, "buy_the_lowist" => true, "payTypes" => "Wise", "price_type" => "auto", "trade_type" => "BUY"],
-                //---SELL
+                // ---SELL
                 ["name" => "SELL BTC track", "price_multiplied" => 1.034, "asset" => "BTC", "fiat" => "USD", "track_type" => "good_dule", "payTypes" => "Wise", "price_type" => "auto", "trade_type" => "SELL"],
-                ["name" => "SELL USDT track", "price_multiplied" => 1.013, "asset" => "USDT", "fiat" => "USD", "track_type" => "good_dule", "payTypes" => "Wise", "price_type" => "auto", "trade_type" => "SELL"],
+                // ["name" => "SELL USDT track", "price_multiplied" => 1.013, "asset" => "USDT", "fiat" => "USD", "track_type" => "good_dule", "payTypes" => "Wise", "price_type" => "auto", "trade_type" => "SELL"],
 
 
                 // --------------pading_ads-------------------------
@@ -127,7 +127,7 @@ class updatePrise extends Command
             $secands = $secands + 75;
         }
         if ($req == "no orders to chack") {
-            $secands = $secands + 20;
+            $secands = $secands + 10;
         }
 
         return ["secands" => $secands, "last_req" => $req];

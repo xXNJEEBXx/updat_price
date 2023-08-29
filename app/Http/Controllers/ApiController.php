@@ -9,8 +9,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Request;
 use App\Models\cookie;
 use App\Models\status;
-//Google2FA
-use PragmaRX\Google2FA\Google2FA;
+
 
 class ApiController extends Controller
 {
@@ -22,12 +21,7 @@ class ApiController extends Controller
     public function changprics($my_data)
     {
         // $my_data = ["name" => "SELL USDT AD", "price_multiplied" => 1.005, "id" => "11489302371517079552", "price_type" => "auto", "asset" => "USDT", "fiat" => "USD", "track_type" => "choce_best_price", "trade_type" => "SELL",  "payTypes" => "Wise"];
-        // $_g2fa = new Google2FA();
-        // $current_otp = $_g2fa->getCurrentOtp("2AWQVM2FJTTCIFEI7T7STBSPYVZXFOL6");
-        // echo $current_otp;
-        // if (self::getstatus()) {
-        //     return  "program turn off in database";
-        // }
+
 
         $ads_list = git_data::ads_list($my_data);
         $ads_data = git_data::ads_data();
@@ -78,6 +72,7 @@ class ApiController extends Controller
 
     public function postcookies(Request $request)
     {
+        $request = $request->json()->all();
         $data = cookie::get()->first();
         if ($data == null) {
             $cookie_table = new  cookie;
@@ -90,7 +85,7 @@ class ApiController extends Controller
             $cookie_table->csrftoken = $request["csrftoken"];
             $cookie_table->save();
         }
-        return  $this->getdate($cookie_table->updated_at);
+        return  ["data" => $this->getdate($cookie_table->updated_at)];
     }
 
 

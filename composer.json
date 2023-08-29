@@ -13,7 +13,8 @@
         "laravel/framework": "^8.65",
         "laravel/sanctum": "^2.12",
         "laravel/tinker": "^2.5",
-        "medz/cors": "^1.5"
+        "medz/cors": "^1.5",
+        "pragmarx/google2fa": "^8.0"
     },
     "require-dev": {
         "facade/ignition": "^2.5",

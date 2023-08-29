@@ -35,6 +35,8 @@ class chack_list extends Controller
             return false;
         }
         if ($ad["adv"]["minSingleTransAmount"] > git_data::ad_msta($my_data["track_amount"])) {
+
+
             return false;
         }
         // chack if the diffrince is biger than 100
@@ -42,9 +44,10 @@ class chack_list extends Controller
         //     return false;
         // }
         // // chack if he has at lees 1000
-        if (($ad["adv"]["surplusAmount"] * $ad["adv"]["price"]) < git_data::ad_msta($my_data["track_amount"])) {
-            return false;
-        }
+        // if (($ad["adv"]["surplusAmount"] * $ad["adv"]["price"]) < git_data::ad_msta($my_data["track_amount"])) {
+        //     echo "surplusAmount\n";
+        //     return false;
+        // }
         return true;
     }
 

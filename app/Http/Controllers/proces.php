@@ -126,14 +126,19 @@ remarks:" . $traked_ad["adv"]["remarks"];
 
     static function send_progress_orders($order)
     {
+        $status = 0;
+        if ($order["orderStatus"] == 5) {
+            $status = 7;
+        }
         $payment = self::git_payment($order);
         $name = self::git_name($payment);
         $email = self::git_email($payment);
         $pay_id = $payment["payMethodId"];
         $table = new  progress_order;
+        $table->type = $order["tradeType"];
         $table->order_id = $order["orderNumber"];
         $table->payment = $payment["tradeMethodName"];
-        $table->status = 0;
+        $table->status = $status;
         $table->binace_name = $name;
         if (!$email) {
             $email = "no email";

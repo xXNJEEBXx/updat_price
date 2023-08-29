@@ -442,6 +442,21 @@ class git_data extends Controller
         return $my_data;
     }
 
+    static function get_progress_orders()
+    {
+        //5
+        $progress_orders = [];
+        $all_orders = git_data::progress_orders();
+        foreach ($all_orders as $order) {
+            //4 complete orders 6 canceled orders
+            if ($order["tradeType"] == "BUY") {
+                $progress_orders[] = $order;
+            }
+        }
+        return $progress_orders;
+    }
+
+
     static function set_progress_orders_amount($my_data)
     {
 
@@ -463,8 +478,13 @@ class git_data extends Controller
         $carbon = Carbon::createFromTimestamp($start_time / 1000);
         $start_time = $carbon->subMonths(3);
         $start_time = strtotime($start_time) * 1000;
-        $full_orders = self::catch_errors(function () use ($start_time, $end_time, $orderStatusList, $tradetype) {
-            return Http::withHeaders(self::heders())->post("https://p2p.binance.com/bapi/c2c/v1/private/c2c/order-match/order-list-archived-involved", ["page" => 1, "rows" => 10, "orderStatusList" => $orderStatusList, "startDate" => $start_time, "endDate" => $end_time, "tradeType" => $tradetype]);
+        $paylode = ["page" => 1, "rows" => 10, "orderStatusList" => $orderStatusList, "startDate" => $start_time, "endDate" => $end_time];
+        if ($tradetype != "all orders") {
+            $paylode = array_merge($paylode, ["tradeType" => $tradetype]);
+        }
+        $full_orders = self::catch_errors(function () use ($paylode) {
+
+            return Http::withHeaders(self::heders())->post("https://p2p.binance.com/bapi/c2c/v1/private/c2c/order-match/order-list-archived-involved", $paylode);
         });
         return $full_orders["data"];
     }
