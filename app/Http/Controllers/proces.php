@@ -6,6 +6,7 @@ use App\Models\finshed_orders;
 use Illuminate\Http\Request;
 use App\Models\status;
 use App\Models\progress_order;
+use App\Models\wise_transaction;
 use PhpParser\Node\Expr\Isset_;
 
 class proces extends Controller
@@ -126,26 +127,30 @@ remarks:" . $traked_ad["adv"]["remarks"];
 
     static function send_progress_orders($order)
     {
-        $status = 0;
-        if ($order["orderStatus"] == 5) {
-            $status = 7;
-        }
-        $payment = self::git_payment($order);
-        $name = self::git_name($payment);
-        $email = self::git_email($payment);
-        $pay_id = $payment["payMethodId"];
         $table = new  progress_order;
-        $table->type = $order["tradeType"];
+        $payment = self::git_payment($order);
         $table->order_id = $order["orderNumber"];
         $table->payment = $payment["tradeMethodName"];
-        $table->status = $status;
-        $table->binace_name = $name;
-        if (!$email) {
-            $email = "no email";
-        }
-        $table->email = $email;
-        $table->pay_id = $pay_id;
+        $table->type = $order["tradeType"];
+        $table->status = 0;
         $table->value = $order["totalPrice"];
+        if ($order["tradeType"] == "BUY") {
+            $name = self::git_name($payment);
+            $table->binace_name = $name;
+            $email = self::git_email($payment);
+            if (!$email) {
+                $email = "no email";
+            }
+            $table->email = $email;
+            $pay_id = $payment["payMethodId"];
+            $table->pay_id = $pay_id;
+        } else {
+            $table->binace_name = git_data::get_binance_sell_order_name($order);
+            $table->status = 10;
+        }
+        if ($order["orderStatus"] == 5) {
+            $table->status = 7;
+        }
         $table->save();
         echo "progress order added\n";
     }
@@ -266,5 +271,65 @@ remarks:" . $traked_ad["adv"]["remarks"];
             }
         }
         return $finshed_progress_orders_array;
+    }
+
+    static function chack_if_thare_is_orders_just_updated($progress_orders, $finshed_progress_orders)
+    {
+        foreach ($progress_orders as $order) {
+            foreach ($finshed_progress_orders as $finshed_order) {
+                if ($order["orderNumber"]  == $finshed_order["order_id"]) {
+                    if (($order["orderStatus"] == 2) && ($finshed_order["status"] == 9)) {
+                        $finshed_order["status"] = 10;
+                        self::update_orders_status($finshed_order);
+                        echo "the buyer marked the order as paid\n";
+                    }
+                }
+            }
+        }
+    }
+    //no need delete it
+    static function update_transactions($finshed_progress_orders)
+    {
+        $wise_transactions = wise_transaction::where("status", 0)->get();
+        echo "here\n";
+
+        foreach ($wise_transactions as $wise_transaction) {
+            if (self::chack_value($wise_transaction, $finshed_progress_orders)) {
+                $wise_transaction["status"] = 1;
+                $wise_transaction->save();
+                echo "transaction closed\n";
+            }
+        }
+    }
+    static function chack_value($wise_transaction, $finshed_progress_orders)
+    {
+        foreach ($finshed_progress_orders as $finshed_order) {
+            if ($wise_transaction["value"] == $finshed_order["value"]) {
+                return true;
+            }
+        }
+        return false;
+    }
+    static function chack_transaction($order)
+    {
+        $wise_transactions = wise_transaction::where("status", 0)->get();
+        foreach ($wise_transactions as $wise_transaction) {
+            if ($wise_transaction["value"] == $order["value"]) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    static function close_transaction($order)
+    {
+        $wise_transactions = wise_transaction::where("status", 0)->get();
+        foreach ($wise_transactions as $wise_transaction) {
+            if ($wise_transaction["value"] == $order["value"]) {
+                $wise_transaction["status"] = 1;
+                $wise_transaction->save();
+                echo "transaction closed\n";
+            }
+        }
     }
 }

@@ -4,24 +4,30 @@ namespace App\Http\Controllers;
 
 use App\Models\progress_order;
 use App\Models\sms_notification;
+use App\Models\wise_transaction;
 use Illuminate\Http\Request;
 use Telegram\Bot\Laravel\Facades\Telegram;
+use App\Models\binance_task;
 use Carbon\Carbon;
 //Google2FA
 use PragmaRX\Google2FA\Google2FA;
+//google api
+use Google\Client;
+use Google\Service\Gmail;
+
+
 
 class progress_orders extends Controller
 {
     public function chack_orders($my_data)
     {
+
         $ads_data = git_data::ads_data();
         if ($ads_data->status() !== 200) {
             return  "You need to log in";
         }
         $finshed_progress_orders = proces::get_finshed_progress_orders();
-
         $progress_orders = git_data::get_progress_orders();
-
 
         do {
             $orders_need_to_store_it = proces::orders_need_to_store_it($progress_orders, $finshed_progress_orders);
@@ -39,6 +45,11 @@ class progress_orders extends Controller
             $order["status"] = 1;
             proces::update_orders_status($order);
         }
+        //chack if thare is orders just updated and mark it from 9 to 10
+        //turnd off for now
+        proces::chack_if_thare_is_orders_just_updated($progress_orders, $finshed_progress_orders);
+        //chack transactions if they take more than 15 minites
+        self::chack_transactions();
         $finshed_progress_orders = proces::get_finshed_progress_orders();
         if (count($finshed_progress_orders) == 0) {
             return "no orders to chack";
@@ -79,13 +90,59 @@ class progress_orders extends Controller
                 $order["status"] = 7;
                 proces::update_orders_status($order);
                 git_data::mark_order_as_paid($order);
-                echo "order marked as payid\n";
+                echo "order marked as paid\n";
+            }
+            //chack the transaction and send the telgram massege for validate transaction for sell orders
+            // print wait it to marked as paid
+
+            if ($order->status == 8) {
+                $order["status"] = 9;
+                proces::update_orders_status($order);
+                echo "wait buyer mark order as paid\n";
+            }
+            //stauts 10 will convert automatic above 
+
+            //order marked as paid
+            if ($order->status == 10) {
+                self::telgram_send_Validat_transaction_massge($order);
+                $order["status"] = 11;
+                proces::update_orders_status($order);
+                echo "send telgram name transaction Validat\n";
+            }
+            if ($order->status == 11) {
+                $now = Carbon::now();
+                $wise_transactions = wise_transaction::where("status", 0)->get();
+                if (count($wise_transactions) > 0 || $order->updated_at->diffInMinutes($now) >= 2) {
+                    if (self::chack_vote_no($updates, $order)) {
+                        $order["status"] = 7;
+                        proces::update_orders_status($order);
+                        echo "bad name cancel order\n";
+                    } else {
+                        if (self::chack_vote_yes($updates, $order) || (proces::chack_transaction($order) && $order->updated_at->diffInMinutes($now) >= 7)) {
+                            if (proces::chack_transaction($order)) {
+                                proces::close_transaction($order);
+                            }
+                            //send task to binance
+                            git_data::send_binace_task_for_release($order);
+                            $order["status"] = 12;
+                            proces::update_orders_status($order);
+                            echo "amount need to relesed send task\n";
+                            // echo "amount relesed and order just closed\n";
+                        }
+                    }
+                    if (!(self::chack_vote_yes($updates, $order) || (proces::chack_transaction($order) && $order->updated_at->diffInMinutes($now) >= 7))) {
+                        echo "waiting transaction name Validat or the 5 minites\n";
+                    }
+                } else {
+                    echo "waiting transaction 2 minites for the transaction arive\n";
+                }
             }
         }
         return "orders chack successfully";
     }
 
     //states types 0 wating for requests 1 wating for finsh requests
+
 
 
 
@@ -101,6 +158,41 @@ wise name :" . $order["wise_name"];
             'question' => $question,
             'options' => ['Yes', 'No']
         ]);
+    }
+
+    public function telgram_send_Validat_transaction_massge($order)
+    {
+        $wise_transactions = wise_transaction::where("status", 0)->get();
+        $transactions = "";
+        foreach ($wise_transactions as $wise_transaction) {
+            $transactions = $transactions . "name :" . $wise_transaction->wise_name . " value :" . $wise_transaction->value . "\n";
+        }
+        if (count($wise_transactions) == 0) {
+            $transactions = "no transactions";
+        }
+        $question = "is this transaction are currct??
+id :" . $order["order_id"] . "
+binace name :" . $order["binace_name"] . " value :" . $order["value"] . " \nwise transactions  " . $transactions;
+        Telegram::sendPoll([
+            'chat_id' => "438631667",
+            'question' => $question,
+            'options' => ['Yes', 'No']
+        ]);
+    }
+
+    public function chack_transactions()
+    {
+        $wise_transactions = wise_transaction::where('status', 0)->get();
+        foreach ($wise_transactions as $wise_transaction) {
+            $now = Carbon::now();
+            //finishedOn is in Seconds 
+            $finishedOn = Carbon::createFromTimestamp($wise_transaction->finishedOn);
+            if ($finishedOn->diffInMinutes($now) >= 15) {
+                $wise_transaction->status = 1;
+                $wise_transaction->save();
+                echo "transaction closed\n";
+            }
+        }
     }
 
     public function chack_vote_no($updates, $order)
@@ -171,6 +263,58 @@ wise name :" . $order["wise_name"];
         return "no progress order";
     }
 
+    public function git_progress_task()
+    {
+        return ["data" => self::git_progress_task_text()];
+    }
+
+    public function git_progress_task_text()
+    {
+
+        $ads_data = git_data::ads_data();
+        if ($ads_data->status() !== 200) {
+            return  "You need to log in";
+        }
+        $finshed_progress_orders = self::git_task_for_binance();
+        if (count($finshed_progress_orders) > 0) {
+            // 1 for sell trade type 2 for relesed orders
+            $progress_orders = git_data::full_orders([2], 1);
+        }
+
+        foreach ($finshed_progress_orders as $finshed_progress_order) {
+            foreach ($progress_orders as $order) {
+                if ($order["orderNumber"] == $finshed_progress_order->order_id) {
+                    return $finshed_progress_order;
+                }
+            }
+        }
+
+        return "no progress task";
+    }
+
+    public function update_progress_task(Request $data)
+    {
+        $data = $data->json()->all();
+        $finshed_progress_orders = progress_order::where('order_id', $data["order_id"])->get()->first();
+        $finshed_progress_orders->status = $data["status"];
+        $finshed_progress_orders->save();
+        return ["data" => "task update successfully"];
+    }
+
+    // public function git_task_for_wise()
+    // {
+    //     $orders_for_wise = progress_order::all();
+    //     $array = [];
+    //     foreach ($orders_for_wise as $order_for_wise) {
+    //         if ($order_for_wise->status == "0" || $order_for_wise->status == "5") {
+    //             $array[] = $order_for_wise;
+    //         }
+    //     }
+
+    //     return $array;
+    // }
+
+
     public function update_progress_order(Request $order)
     {
         $order = $order->json()->all();
@@ -183,7 +327,35 @@ wise name :" . $order["wise_name"];
         return ["data" => "orders update successfully"];
     }
 
+    public function update_transactions(Request $transactions)
+    {
+        $transactions = $transactions->json()->all();
+        $wise_transactions = wise_transaction::all();
+        foreach ($transactions as $transaction) {
+            if ($transaction["category"] == "MONEY_ADDED" && self::chack_transaction_id($transaction["id"], $wise_transactions)) {
+                $amount = strip_tags($transaction["primaryAmount"]);
+                $amount = str_replace(array("+", "USD", " "), "", $amount);
+                $table = new  wise_transaction;
+                $table->wise_transaction_id = $transaction["id"];
+                $table->wise_name = strip_tags($transaction["title"]);
+                $table->value = $amount;
+                $table->status = 0;
+                $table->finishedOn = strtotime($transaction["finishedOn"]);
+                $table->save();
+            }
+        }
+        return ["data" => "transactions updated successfully"];
+    }
 
+    public function chack_transaction_id($id, $wise_transactions)
+    {
+        foreach ($wise_transactions as $wise_transaction) {
+            if ($wise_transaction->wise_transaction_id == $id) {
+                return false;
+            }
+        }
+        return true;
+    }
 
 
     public function new_sms_massage($name, $number, $message)
@@ -215,12 +387,56 @@ wise name :" . $order["wise_name"];
         }
         return "no sms massage yet";
     }
+
+
+    public function git_binance_email_otp()
+    {
+        return ["data" => self::git_binance_email_otp_text()];
+    }
+
+    public function git_binance_email_otp_text()
+    {
+        $client = new Client();
+        $client->setClientId('261842284700-6kggl2u51ifu32i99bf9j0m2fdfhcc0d.apps.googleusercontent.com');
+        $client->setClientSecret('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');
+        //refreshToken need to update every 6 month using this link https://developers.google.com/oauthplayground/
+        $client->refreshToken('1//04pq9HJKgsoTjCgYIARAAGAQSNwF-L9IrvRzWfJEQZAgLsyHySyKha4auhABA9Vn-n-VTRtYRY_HELLPe47Bc7S-KGeCJWE4-ME4');
+        if ($client->isAccessTokenExpired()) {
+            $client->fetchAccessTokenWithRefreshToken($client->getRefreshToken());
+        }
+        $service = new Gmail($client);
+        $userId = 'me';
+        $results = $service->users_messages->listUsersMessages($userId, ['maxResults' => 20]);
+        foreach ($results->getMessages() as $message) {
+            $messageData = $service->users_messages->get($userId, $message->getId());
+            $internalDate = $messageData["internalDate"]; // This is the internalDate from Gmail API
+            $currentTime = round(microtime(true) * 1000);
+
+            if (in_array('IMPORTANT', $messageData->getLabelIds()) && strpos($messageData->getSnippet(), 'Binance Release P2P') !== false  && chack_list::chack_binace_email_otp_id($messageData["id"]) && ($currentTime - $internalDate <= 5 * 60 * 1000)) {
+                git_data::save_binace_email_otp_id($messageData["id"]);
+                preg_match_all("/Your verification code: (\d{6})/", $messageData["snippet"], $matches);
+                //return otp code
+                return  $matches[1][0];
+            }
+        }
+        return  "no otp code yet";
+    }
+
+    public function git_binance_g2fa_otp()
+    {
+        $_g2fa = new Google2FA();
+        $current_otp = $_g2fa->getCurrentOtp("6H3FTKVCRUVPEUNQ");
+        return ["data" => $current_otp];
+    }
     public function git_wise_login_otp()
     {
         $_g2fa = new Google2FA();
         $current_otp = $_g2fa->getCurrentOtp("BMAUAAWP2ZLPBYGMKO2GAZP6FMJCMRQQ");
         return ["data" => $current_otp];
     }
+
+
+
 
     public function git_orders_for_wise()
     {
@@ -229,6 +445,20 @@ wise name :" . $order["wise_name"];
         foreach ($orders_for_wise as $order_for_wise) {
             if ($order_for_wise->status == "0" || $order_for_wise->status == "5") {
                 $array[] = $order_for_wise;
+            }
+        }
+
+        return $array;
+    }
+
+
+    public function git_task_for_binance()
+    {
+        $orders_for_binance = binance_task::all();
+        $array = [];
+        foreach ($orders_for_binance as $order_for_binance) {
+            if ($order_for_binance->status == "0") {
+                $array[] = $order_for_binance;
             }
         }
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\status;
+use App\Models\finshed_otp_binane_email;
 
 
 
@@ -223,5 +224,15 @@ class chack_list extends Controller
             return true;
         }
         return false;
+    }
+
+    static function chack_binace_email_otp_id($id)
+    {
+        $data = finshed_otp_binane_email::where('otp_id', $id)->first();
+        if ($data == null) {
+            return true;
+        } else {
+            return false;
+        }
     }
 }

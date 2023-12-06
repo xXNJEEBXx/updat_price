@@ -50,20 +50,20 @@ class updatePrise extends Command
             [
                 //--------------choce_best_price-------------------
                 //---sell
-                ["name" => "SELL BTC AD", "price_multiplied" => 1.015, "id" => "11496911875305992192", "price_type" => "auto", "asset" => "BTC", "fiat" => "USD", "track_type" => "choce_best_price", "trade_type" => "SELL", "payTypes" => "Wise"],
-                ["name" => "SELL USDT AD", "price_multiplied" => 1.013, "id" => "11489302371517079552", "price_type" => "auto", "asset" => "USDT", "fiat" => "USD", "track_type" => "choce_best_price", "trade_type" => "SELL",  "payTypes" => "Wise"],
+                //["name" => "SELL BTC AD", "price_multiplied" => 1.015, "id" => "11496911875305992192", "price_type" => "auto", "asset" => "BTC", "fiat" => "USD", "track_type" => "choce_best_price", "trade_type" => "SELL", "payTypes" => "Wise"],
+                ["name" => "SELL USDT AD", "price_multiplied" => 1.013, "id" => "11539542195302817792", "price_type" => "auto", "asset" => "USDT", "fiat" => "USD", "track_type" => "choce_best_price", "trade_type" => "SELL",  "payTypes" => "Wise"],
                 //---BUY
                 ["name" => "BUY USDT AD", "price_multiplied" => 1.011, "id" => "11506316506589458432", "price_type" => "auto", "asset" => "USDT", "fiat" => "USD", "track_type" => "choce_best_price", "trade_type" => "BUY", "max_amount" => 1000, "payTypes" => "Wise"],
-                ["name" => "BUY BUSD AD", "price_multiplied" => 1.005, "id" => "11471976478695088128", "price_type" => "auto", "asset" => "BUSD", "fiat" => "USD", "track_type" => "choce_best_price", "trade_type" => "BUY", "max_amount" => 150, "payTypes" => "Wise"],
+                //["name" => "BUY BUSD AD", "price_multiplied" => 1.005, "id" => "11471976478695088128", "price_type" => "auto", "asset" => "BUSD", "fiat" => "USD", "track_type" => "choce_best_price", "trade_type" => "BUY", "max_amount" => 150, "payTypes" => "Wise"],
 
                 //--------------good_dule-------------------------
                 //---BUY
-                ["name" => "BUY BTC track", "price_multiplied" => 1.005, "asset" => "BTC", "fiat" => "USD", "track_type" => "good_dule", "max_amount" => 50, "buy_the_lowist" => true, "payTypes" => "Wise", "price_type" => "auto", "trade_type" => "BUY"],
-                ["name" => "BUY USDT track", "price_multiplied" => 1.005, "asset" => "USDT", "fiat" => "USD", "track_type" => "good_dule", "max_amount" => 1000, "buy_the_lowist" => true, "payTypes" => "Wise", "price_type" => "auto", "trade_type" => "BUY"],
-                ["name" => "BUY BUSD track", "price_multiplied" => 1.005, "asset" => "BUSD", "fiat" => "USD", "track_type" => "good_dule", "max_amount" => 100, "buy_the_lowist" => true, "payTypes" => "Wise", "price_type" => "auto", "trade_type" => "BUY"],
+                //["name" => "BUY BTC track", "price_multiplied" => 1.005, "asset" => "BTC", "fiat" => "USD", "track_type" => "good_dule", "max_amount" => 50, "buy_the_lowist" => true, "payTypes" => "Wise", "price_type" => "auto", "trade_type" => "BUY"],
+                //["name" => "BUY USDT track", "price_multiplied" => 1.005, "asset" => "USDT", "fiat" => "USD", "track_type" => "good_dule", "max_amount" => 1000, "buy_the_lowist" => true, "payTypes" => "Wise", "price_type" => "auto", "trade_type" => "BUY"],
+                //["name" => "BUY BUSD track", "price_multiplied" => 1.005, "asset" => "BUSD", "fiat" => "USD", "track_type" => "good_dule", "max_amount" => 100, "buy_the_lowist" => true, "payTypes" => "Wise", "price_type" => "auto", "trade_type" => "BUY"],
                 // ---SELL
-                ["name" => "SELL BTC track", "price_multiplied" => 1.034, "asset" => "BTC", "fiat" => "USD", "track_type" => "good_dule", "payTypes" => "Wise", "price_type" => "auto", "trade_type" => "SELL"],
-                // ["name" => "SELL USDT track", "price_multiplied" => 1.013, "asset" => "USDT", "fiat" => "USD", "track_type" => "good_dule", "payTypes" => "Wise", "price_type" => "auto", "trade_type" => "SELL"],
+                //["name" => "SELL BTC track", "price_multiplied" => 1.034, "asset" => "BTC", "fiat" => "USD", "track_type" => "good_dule", "payTypes" => "Wise", "price_type" => "auto", "trade_type" => "SELL"],
+                ["name" => "SELL USDT track", "price_multiplied" => 1.013, "asset" => "USDT", "fiat" => "USD", "track_type" => "good_dule", "payTypes" => "Wise", "price_type" => "auto", "trade_type" => "SELL"],
 
 
                 // --------------pading_ads-------------------------

@@ -33,11 +33,19 @@ Route::get('/git_track_data', 'track_controller@git_track_data');
 Route::get('/git_track_data2', 'track_controller@track_orders');
 
 //progress order
-Route::get('/git_progress_order', 'progress_orders@git_progress_order');
+//  binance
+Route::get('/git_progress_task', 'progress_orders@git_progress_task');
+Route::get('/git_binance_email_otp', 'progress_orders@git_binance_email_otp');
+Route::get('/git_binance_g2fa_otp', 'progress_orders@git_binance_g2fa_otp');
+Route::post('/update_progress_task', 'progress_orders@update_progress_task');
+
+//  wise
 Route::get('/git_order_otp', 'progress_orders@git_order_otp');
+Route::get('/git_progress_order', 'progress_orders@git_progress_order');
 Route::get('/git_wise_login_otp', 'progress_orders@git_wise_login_otp');
 Route::post('/update_progress_order', 'progress_orders@update_progress_order');
 Route::get("/new_sms_massage/name/{name}/number/{number}/message/{message}", 'progress_orders@new_sms_massage');
+Route::post('/update_transactions', 'progress_orders@update_transactions');
 
 
 

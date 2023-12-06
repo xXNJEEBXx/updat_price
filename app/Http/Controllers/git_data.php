@@ -9,6 +9,8 @@ use Illuminate\Http\Request;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Client\ConnectionException;
 use GuzzleHttp\Exception\RequestException;
+use App\Models\finshed_otp_binane_email;
+use App\Models\binance_task;
 use Carbon\Carbon;
 
 
@@ -451,6 +453,10 @@ class git_data extends Controller
             //4 complete orders 6 canceled orders
             if ($order["tradeType"] == "BUY") {
                 $progress_orders[] = $order;
+            } else {
+                if ($order["orderStatus"] == 2) {
+                    $progress_orders[] = $order;
+                }
             }
         }
         return $progress_orders;
@@ -511,5 +517,31 @@ class git_data extends Controller
             Http::withHeaders(self::heders())->post("https://p2p.binance.com/bapi/c2c/v1/private/c2c/order-match/notifyOrderPayed", ["orderNumber" => $order["order_id"], "payId" => $order["pay_id"]]);
         });
         return "done";
+    }
+
+    static function save_binace_email_otp_id($id)
+    {
+        $table = new  finshed_otp_binane_email;
+        $table->otp_id = $id;
+        $table->save();
+    }
+
+    static function send_binace_task_for_release($order)
+    {
+        $table = new binance_task();
+        $table->order_id = $order["order_id"];
+        $table->status = 0;
+        $table->type = "release";
+        $table->save();
+    }
+
+    static function get_binance_sell_order_name($order)
+    {
+        $ad_info = self::catch_errors(function () use ($order) {
+            $paylode = ["createTime" => $order["createTime"], "orderNumber" => $order["orderNumber"]];
+            return Http::withHeaders(self::heders())->post("https://p2p.binance.com/bapi/c2c/v2/private/c2c/order-match/order-detail", $paylode);
+        });
+
+        return $ad_info["data"]["buyerName"];
     }
 }

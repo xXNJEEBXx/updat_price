@@ -27,6 +27,7 @@ class CreateProgressOrdersTable extends Migration
             $table->string('binace_name')->nullable();
             $table->string('wise_name')->nullable();
             $table->float('value')->nullable();
+            $table->string('finishedOn')->nullable();
             $table->timestamps();
         });
     }
