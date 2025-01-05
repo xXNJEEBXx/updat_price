@@ -23,19 +23,23 @@ class ApiController extends Controller
         // $my_data = ["name" => "SELL USDT AD", "price_multiplied" => 1.005, "id" => "11489302371517079552", "price_type" => "auto", "asset" => "USDT", "fiat" => "USD", "track_type" => "choce_best_price", "trade_type" => "SELL",  "payTypes" => "Wise"];
 
 
-        $ads_list = git_data::ads_list($my_data);
-        $ads_data = git_data::ads_data();
 
+        $ads_list = git_data::ads_list($my_data);
+
+
+        $ads_data = git_data::ads_data();
         if ($ads_data->status() !== 200) {
             return "You need to log in";
         }
 
         $my_ad_data = git_data::ad_data($ads_data, $my_data);
+        
+        //proces::update_amount($my_data);
+        $my_data = chack_list::set_auto_price($my_data);
 
-        proces::update_amount($my_data);
-        $my_data = proces::add_defult_ad_amount($my_data, $my_ad_data);
-        $my_data = chack_list::price_type_and_amount($my_data);
-        $my_data = proces::add_crupto_amount($my_data, $my_ad_data);
+        $my_data = proces::add_defult_ad_amount($my_data, $my_ad_data, $ads_list);
+        $my_data = chack_list::set_auto_amount($my_data, $my_ad_data);
+      // $my_data = proces::add_crupto_amount($my_data, $my_ad_data);
 
         if (chack_list::chack_ad_status($my_ad_data)) {
             return  "ad is turn off in binance";
@@ -163,5 +167,10 @@ class ApiController extends Controller
         if ($data != null) {
             return  $data->status;
         }
+    }
+
+    public function get_crupto_pricec_from_marketcup()
+    {
+        return git_data::get_crupto_pricec_from_marketcup();
     }
 }

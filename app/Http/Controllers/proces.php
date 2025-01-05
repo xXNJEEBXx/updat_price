@@ -12,11 +12,12 @@ use PhpParser\Node\Expr\Isset_;
 class proces extends Controller
 {
 
-    static function add_defult_ad_amount($my_data, $my_ad_data)
+    static function add_defult_ad_amount($my_data, $my_ad_data, $ads_list)
     {
         $my_data["track_amount"] = 0;
         if ($my_ad_data["tradeType"] == "SELL") {
-            $my_data["track_amount"] = $my_ad_data["tradableQuantity"] * $my_ad_data["price"];
+          //  $my_data["track_amount"] = $my_ad_data["tradableQuantity"] * $my_ad_data["price"];
+          $my_data["track_amount"] =$my_ad_data["initAmount"]* git_data::new_price($my_data, git_data::enemy_ad($ads_list, $my_data, $my_ad_data));
         }
 
         return $my_data;
@@ -81,7 +82,7 @@ class proces extends Controller
         if (isset($my_data["trade_type"]) && $my_data["trade_type"] == "SELL") {
             return "STOP";
         }
-        $full_orders = git_data::full_orders([4], 0);
+        $full_orders = git_data::full_orders([4], 0, $my_data);
         $track_table = status::where('name', "track_amount")->first();
         $finshed_orders = finshed_orders::all();
 
@@ -331,5 +332,16 @@ remarks:" . $traked_ad["adv"]["remarks"];
                 echo "transaction closed\n";
             }
         }
+    }
+    // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ convert asset @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+    static function get_usdt_amount_from_spot_wallet($spot_wallet_assets)
+    {
+        foreach ($spot_wallet_assets as $asset) {
+            if ($asset["asset"] == "USDT") {
+                return $asset["free"];
+            }
+        }
+        return 0;
     }
 }

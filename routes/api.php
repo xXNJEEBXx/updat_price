@@ -48,6 +48,9 @@ Route::get("/new_sms_massage/name/{name}/number/{number}/message/{message}", 'pr
 Route::post('/update_transactions', 'progress_orders@update_transactions');
 
 
+//track price system
+Route::get('/get_prices', 'ApiController@get_crupto_pricec_from_marketcup');
+
 
 
 

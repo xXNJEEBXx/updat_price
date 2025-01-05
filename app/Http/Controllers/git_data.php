@@ -57,8 +57,10 @@ class git_data extends Controller
         $cookies = self::catch_errors(function () {
             return cookie::all()->first();
         });
-
-
+        return self::heders_for_regolar($cookies);
+    }
+    static function heders_for_regolar($cookies)
+    {
         return [
             'authority' => 'p2p.binance.com',
             'accept' => '*/*',
@@ -83,8 +85,46 @@ class git_data extends Controller
             'user-agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.60 Safari/537.36',
             'x-trace-id' => 'ee96a687-d600-4fa3-bc1c-a674b88ad426',
             'x-ui-request-trace' => 'ee96a687-d600-4fa3-bc1c-a674b88ad426'
+        ];;
+    }
+    static function heders_for_convert($cookies)
+    {
+
+        return [
+            'authority' => 'www.binance.com',
+            'method' => 'GET',
+            'path' => '/bapi/margin/v2/friendly/new-otc/get-from-selector?walletType=SPOT_FUNDING&showBlock=1',
+            'scheme' => 'https',
+            'Accept' => '*/*',
+            'Accept-Encoding' => 'gzip, deflate, br,zstd',
+            'Accept-Language' => 'en-SA,en;q=0.9,ar-SA;q=0.8,ar;q=0.7,en-GB;q=0.6,en-US;q=0.5',
+            'Bnc-Location' => 'BINANCE',
+            'Bnc-Uuid' => '3ece6282-abad-4618-877c-e86fa082fe18',
+            'Cache-Control' => 'no-cache',
+            'Clienttype' => 'web',
+            'Content-type' => 'application/json',
+            'cookie' => $cookies->cookies,
+            'csrftoken' => $cookies->csrftoken,
+            'device-info' => 'eyJzY3JlZW5fcmVzb2x1dGlvbiI6IjE5MjAsMTA4MCIsImF2YWlsYWJsZV9zY3JlZW5fcmVzb2x1dGlvbiI6IjE5MjAsMTA0MCIsInN5c3RlbV92ZXJzaW9uIjoiV2luZG93cyAxMCIsImJyYW5kX21vZGVsIjoidW5rbm93biIsInN5c3RlbV9sYW5nIjoiYXIiLCJ0aW1lem9uZSI6IkdNVCszIiwidGltZXpvbmVPZmZzZXQiOi0xODAsInVzZXJfYWdlbnQiOiJNb3ppbGxhLzUuMCAoV2luZG93cyBOVCAxMC4wOyBXaW42NDsgeDY0KSBBcHBsZVdlYktpdC81MzcuMzYgKEtIVE1MLCBsaWtlIEdlY2tvKSBDaHJvbWUvMTAwLjAuNDg5Ni42MCBTYWZhcmkvNTM3LjM2IiwibGlzdF9wbHVnaW4iOiJQREYgVmlld2VyLENocm9tZSBQREYgVmlld2Vy',
+            'Fvideo-Id' => '3208c5733dda270bd919abde5e4c2e92a370532',
+            'Fvideo-Token' => 'u6BkDXV/9MSy1+7n+aXiUrAy9MPU+bieouKm7+xyazzul9R3G98j2IXkueeX9Kg0mtcSK/pkDI9PsdvBEBUAVwvQKw6wT4Pawf8hrByGdxvpTe8WfBVxVODSTOXblIv3unVtIMs0PsGcbOlA7z0AUBzM8IdhGW3ubkMQ+ZVqIeUqXNR99ELFVROUNBhQbSuTc=22',
+            'Lang' => 'ar',
+            'Pragma' => 'no-cache',
+            'Priority' => 'u=1,i',
+            'Referer' => 'https://www.binance.com/ar/convert/USDT/BTC',
+            'Sec-Ch-Ua' => "'Chromium';v='124', 'Google Chrome';v='124', 'Not-A.Brand';v='99'",
+            'Sec-Ch-Ua-Mobile' => '?0',
+            'Sec-Ch-Ua-Platform' => 'Windows',
+            'Sec-Fetch-Dest' => 'empty',
+            'Sec-Fetch-Mode' => 'cors',
+            'Sec-Fetch-Site' => 'same-origin',
+            'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+            'X-Passthrough-Token' => '',
+            'X-Trace-Id' => 'c076ecee-7605-402a-a647-d45906a3fe21',
+            'X-Ui-Request-Trace' => 'c076ecee-7605-402a-a647-d45906a3fe21',
         ];
     }
+    
     static function ads_data()
     {
         $ads_data = self::catch_errors(function () {
@@ -92,9 +132,9 @@ class git_data extends Controller
                 self::heders()
             )->post("https://p2p.binance.com/bapi/c2c/v2/private/c2c/adv/list-by-page", ['inDeal' => 1, 'rows' => 10, 'page' => 1]);
         });
-
         return $ads_data;
     }
+
     static function ads_list($my_data)
     {
         if ($my_data["track_type"] == "choce_best_price") {
@@ -102,20 +142,25 @@ class git_data extends Controller
         }
         $payTypes = [];
         if (isset($my_data["payTypes"]) > 0) {
-            array_push($payTypes, $my_data["payTypes"]);
+            foreach ($my_data["payTypes"] as $payType) {
+                $payTypes[] = $payType;
+            }
         }
 
         $ads_list = self::catch_errors(function () use (&$payTypes, &$my_data) {
-            return  Http::withHeaders(self::heders())->post("https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search", ["page" => 1, "rows" => 10, "payTypes" => $payTypes, "countries" => [], "asset" => $my_data["asset"], "tradeType" => $my_data["trade_type"], "fiat" => $my_data["fiat"], "proMerchantAds" => false, "publisherType" => null]);
+            return  Http::withHeaders(self::heders())->post("https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search", ["additionalKycVerifyFilter" => 0,"asset" => $my_data["asset"],"assetClassifies" => ["mass", "profession", "fiat_trade"],"countries" => [],"fiat" => $my_data["fiat"],"filterType" => "all","page" => 1,"payTypes" => $payTypes,"periods" => [],"proMerchantAds" => false, "publisherType" => null, "rows" => 10,"shieldMerchantAds" => false, "tradeType" => $my_data["trade_type"]]);
         });
+
         return $ads_list["data"];
     }
 
     static function change_price_req($enemy_ad, $my_ad_data, $my_data)
     {
+        print_r(self::paylode_for_change_price($enemy_ad, $my_ad_data, $my_data));
         $res = self::catch_errors(function () use ($enemy_ad, $my_ad_data, $my_data) {
-            return  Http::withHeaders(self::heders())->post("https://p2p.binance.com/bapi/c2c/v2/private/c2c/adv/update", self::paylode_for_change_price($enemy_ad, $my_ad_data, $my_data));
+            return  Http::withHeaders(self::heders())->post("https://p2p.binance.com/bapi/c2c/v3/private/c2c/adv/update", self::paylode_for_change_price($enemy_ad, $my_ad_data, $my_data));
         });
+        return "ok";
     }
 
     static function ad_data($ads_data, $my_data)
@@ -143,8 +188,39 @@ class git_data extends Controller
 
     static function paylode_for_change_price($enemy_ad, $my_ad_data, $my_data)
     {
-
-        $paylode = ["advNo" => $my_ad_data["advNo"], "asset" => $my_ad_data["asset"], "assetScale" => $my_ad_data["assetScale"], "autoReplyMsg" => $my_ad_data["autoReplyMsg"], "buyerBtcPositionLimit" => $my_ad_data["buyerBtcPositionLimit"], "buyerRegDaysLimit" => $my_ad_data["buyerRegDaysLimit"], "fiatScale" => $my_ad_data["fiatScale"], "fiatUnit" => $my_ad_data["fiatUnit"], "initAmount" => self::total_initAmount($enemy_ad, $my_ad_data, $my_data), "launchCountry" => $my_ad_data["launchCountry"], "maxSingleTransAmount" => $my_ad_data["maxSingleTransAmount"], "minSingleTransAmount" => $my_ad_data["minSingleTransAmount"], "payTimeLimit" => $my_ad_data["payTimeLimit"], "price" => self::new_price($my_data, $enemy_ad), "priceFloatingRatio" => $my_ad_data["priceFloatingRatio"], "priceScale" => $my_ad_data["priceScale"], "priceType" => $my_ad_data["priceType"], "remarks" => $my_ad_data["remarks"], "tradeMethods" => $my_ad_data["tradeMethods"], "tradeType" => $my_ad_data["tradeType"]];
+        //$initAmount=self::total_initAmount($enemy_ad, $my_ad_data, $my_data);
+        $initAmount=$my_ad_data["initAmount"];
+        $paylode = [
+            "adAdditionalKycVerifyItems" => $my_ad_data["adAdditionalKycVerifyItems"],
+            "adTags" => [],
+            "advNo" => $my_ad_data["advNo"],
+            "advStatus" => $my_ad_data["advStatus"],
+            "assetScale" => $my_ad_data["assetScale"],
+            "asset" => $my_ad_data["asset"],
+            "autoReplyMsg" => $my_ad_data["autoReplyMsg"],
+            "buyerBtcPositionLimit" => $my_ad_data["buyerBtcPositionLimit"],
+            "buyerRegDaysLimit" => $my_ad_data["buyerRegDaysLimit"],
+            "classify" => $my_ad_data["classify"],
+            "fiatScale" => $my_ad_data["fiatScale"],
+            "fiatUnit" => $my_ad_data["fiatUnit"],
+            "initAmount" => $initAmount,
+            "isSafePayment" => $my_ad_data["isSafePayment"],
+            "launchCountry" => $my_ad_data["launchCountry"],
+            "maxSingleTransAmount" => $my_ad_data["maxSingleTransAmount"],
+            "minSingleTransAmount" => $my_ad_data["minSingleTransAmount"],
+            "onlineDelayTime" => 0,
+            "onlineNow" => true,
+            "payTimeLimit" => $my_ad_data["payTimeLimit"],
+            "price" => self::new_price($my_data, $enemy_ad),
+            "priceFloatingRatio" => $my_ad_data["priceFloatingRatio"],
+            "priceScale" => $my_ad_data["priceScale"],
+            "priceType" => $my_ad_data["priceType"],
+            "remarks" => $my_ad_data["remarks"],
+            "takerAdditionalKycRequired" => $my_ad_data["takerAdditionalKycRequired"],
+            "tradeMethods" => $my_ad_data["tradeMethods"],
+            "tradeType" => $my_ad_data["tradeType"],
+            "visible" => 1,
+        ];
         return $paylode;
     }
 
@@ -286,6 +362,9 @@ class git_data extends Controller
             return Http::withHeaders(self::heders())->get("https://www.binance.com/bapi/composite/v1/public/marketing/symbol/list");
         });
         foreach ($data["data"] as $element) {
+            if ($my_data["fiat"] =="SAR") {
+                $element["price"]= $element["price"]*3.75;
+            }
             if ($element["name"] == $my_data["asset"]) {
                 $my_data["price"] = $element["price"] * $my_data["price_multiplied"];
                 $my_data["orginal_price"] = $element["price"];
@@ -383,7 +462,8 @@ class git_data extends Controller
     static function track_amount($my_data)
     {
         //may need to convert to sar
-        $my_amount =  0;
+
+        //not working i think
         $my_data["free_amount"] = 0;
         $wallet_amount = self::git_wallet_amount();
         if ($my_data["trade_type"] == "BUY") {
@@ -469,7 +549,7 @@ class git_data extends Controller
         $progress_orders = self::progress_orders();
         foreach ($progress_orders as $order) {
             if ($order["tradeType"] == "BUY") {
-                $my_data["track_amount"] += $order["totalPrice"];
+                $my_data["track_amount"] -= $order["totalPrice"];
             }
         }
 
@@ -543,5 +623,62 @@ class git_data extends Controller
         });
 
         return $ad_info["data"]["buyerName"];
+    }
+    // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ convert asset @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+    static function get_assets($my_data)
+    {
+        $data = self::catch_errors(function () use ($my_data) {
+            return Http::withHeaders(self::heders($my_data))->get("https://www.binance.com/bapi/margin/v2/friendly/new-otc/get-from-selector?walletType=SPOT_FUNDING&showBlock=1");
+        });
+        //  print_r($data["data"]);
+        return $data["data"]["toList"];
+    }
+
+    static function get_quote($my_data, $free_usdt)
+    {
+        $data = self::catch_errors(function () use ($my_data, $free_usdt) {
+            return Http::withHeaders(self::heders($my_data))->post("https://www.binance.com/bapi/margin/v1/private/new-otc/get-quote", ["allowBlock" => 1, "fromCoin" => "USDT", "requestAmount" => "1,095", "requestCoin" => "USDT", "toCoin" => "NOT", "walletType" => "SPOT_FUNDING"]);
+        });
+        return $data["data"];
+    }
+
+    static function execute_quote($my_data, $quote)
+    {
+        $data = self::catch_errors(function () use ($my_data, $quote) {
+            return Http::withHeaders(self::heders($my_data))->post("https://www.binance.com/bapi/margin/v1/private/new-otc/execute-quote", ["quoteId" => $quote["quoteId"]]);
+        });
+        return $data["data"];
+    }
+
+    static function make_covert_order($my_data, $execute_quote)
+    {
+        $data = self::catch_errors(function () use ($my_data, $execute_quote) {
+            return Http::withHeaders(self::heders($my_data))->get("https://www.binance.com/bapi/margin/v1/private/new-otc/query-trade-order?orderId=" . $execute_quote["orderId"]);
+        });
+        return $data["data"];
+    }
+
+    static function get_quote_for_chack_login()
+    {
+        $data = self::catch_errors(function () {
+            return Http::withHeaders(self::heders())->get("https://www.binance.com/bapi/asset/v2/private/asset-service/asset/get-user-asset");
+        });
+
+        return $data;
+    }
+
+    //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@track prices system@@@@@@@@@@@@@@@@
+    static function get_crupto_pricec_from_marketcup()
+    {
+        // $data = self::catch_errors(function () {
+        //     return Http::get("https://api.coinmarketcap.com/data-api/v3/cryptocurrency/listing?start=1&limit=10000&sortBy=market_cap&sortType=desc&convert=USD,BTC,ETH&cryptoType=all&tagType=all&audited=false&aux=ath,atl,high24h,low24h,num_market_pairs,cmc_rank,date_added,max_supply,circulating_supply,total_supply,volume_7d,volume_30d,self_reported_circulating_supply,self_reported_market_cap&marketCapRange=10000000~");
+        // });
+        // return $data["data"];
+        // https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?symbol=BTC,ETH&convert=USDT
+        $data = self::catch_errors(function () {
+            return Http::withHeaders(["X-CMC_PRO_API_KEY" => "69ef9c0d-2c54-4b6f-a447-0ae6f410824b"])->get("https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?symbol=BTC,ETH,LTC,XRP,EOS,ADA,DOT,SOL,UNI,LINK,DOGE,BNB,AVAX,MATIC,ATOM,NEAR,ALGO,TRX,FTM,XLM,MANA,ICP,SAND,VET,XTZ,FIL,EGLD,AXS,KLAY,HNT,THETA&convert=USD");
+        });
+        return $data["data"];
     }
 }

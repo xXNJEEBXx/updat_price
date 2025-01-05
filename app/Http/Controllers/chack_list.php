@@ -66,12 +66,22 @@ class chack_list extends Controller
 
     static function chack_amount($my_data)
     {
+        $min_amount_for_usdt = 0;
+        $min_amount_for_BTC= 0;
+        if ($my_data["fiat"] == "USD") {
+            $min_amount_for_usdt = 100;
+            $min_amount_for_BTC = 10;
+        } else {
+            $min_amount_for_usdt = 60;
+            $min_amount_for_BTC = 60;
+        }
+
         if ($my_data["asset"] == "USDT" || $my_data["asset"] == "BUSD") {
-            if ($my_data["crupto_amount"] < 100) {
+            if ($my_data["track_amount"] < $min_amount_for_usdt) {
                 return true;
             }
         } else {
-            if ($my_data["track_amount"] < 10) {
+            if ($my_data["track_amount"] < $min_amount_for_BTC) {
                 return true;
             }
         }
@@ -81,7 +91,7 @@ class chack_list extends Controller
 
     static function chack_max_amount($my_data)
     {
-
+        //this is only for the BUY's ads and for open orders buy
         if (isset($my_data["max_amount"])) {
             if ($my_data["asset"] == "USDT") {
                 if ($my_data["max_amount"] < 100) {
@@ -207,13 +217,21 @@ class chack_list extends Controller
         return false;
     }
 
-    static function price_type_and_amount($my_data)
+
+    static function set_auto_price($my_data)
     {
         if ($my_data["price_type"] == "auto") {
 
             $my_data = git_data::orginal_price($my_data);
         }
-        $my_data = git_data::track_amount($my_data);
+        return $my_data;
+    }
+
+    
+    static function set_auto_amount($my_data,$my_ad_data)
+    {
+        //$my_data = git_data::track_amount($my_data, $my_ad_data);
+        $my_data["track_amount"] =$my_ad_data["initAmount"] * $my_data["orginal_price"];
         return $my_data;
     }
 
@@ -234,5 +252,17 @@ class chack_list extends Controller
         } else {
             return false;
         }
+    }
+    // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ convert asset @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+    static function chack_if_it_has_NOT($spot_wallet_assets)
+    {
+        print_r($spot_wallet_assets);
+        foreach ($spot_wallet_assets as $coin) {
+            if ($coin["coin"] == "NOT") {
+                return true;
+            }
+        }
+        return false;
     }
 }
