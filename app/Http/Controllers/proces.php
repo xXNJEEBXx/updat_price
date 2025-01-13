@@ -8,6 +8,9 @@ use App\Models\status;
 use App\Models\progress_order;
 use App\Models\wise_transaction;
 use PhpParser\Node\Expr\Isset_;
+use App\Models\paymethod;
+use App\Models\supported_paymethod;
+
 
 class proces extends Controller
 {
@@ -66,13 +69,13 @@ class proces extends Controller
         return "success";
     }
 
-    static function make_order($my_data, $ads_list)
+    static function make_order($my_data, $ads_list, $my_payMethods)
     {
-        $traked_ad = git_data::traked_ad($my_data, $ads_list);
-        git_data::open_order_req($my_data, $traked_ad);
+        $traked_ad = git_data::traked_ad($my_data, $ads_list, $my_payMethods);
+        git_data::open_order_req($my_data, $traked_ad, $my_payMethods);
 
         //send massge telegram
-        $telegram_massge = self::make_new_order_massge_countent($my_data, $traked_ad);
+        $telegram_massge = self::make_new_order_massge_countent($my_data, $traked_ad, $my_payMethods);
         git_data::send_massge($telegram_massge);
     }
 
@@ -114,14 +117,14 @@ class proces extends Controller
     }
 
 
-
-    static function make_new_order_massge_countent($my_data, $traked_ad)
+    static function make_new_order_massge_countent($my_data, $traked_ad, $my_payMethods)
     {
         $telegram_massge = "
 You have a new " . $my_data["trade_type"] . " P2P Order \n
 time:" . $traked_ad["adv"]["payTimeLimit"] . " min\n
 price:" . $traked_ad["adv"]["price"] . "\n
-amount in usd:" . git_data::total_amount($my_data, $traked_ad) . " USD\n
+amount:" . git_data::total_amount($my_data, $traked_ad) .$my_data["fiat"].  " \n
+payment method:" . git_data::pay_methed($my_data, $traked_ad, $my_payMethods)["identifier"] . "\n
 remarks:" . $traked_ad["adv"]["remarks"];
         return $telegram_massge;
     }
@@ -191,12 +194,76 @@ remarks:" . $traked_ad["adv"]["remarks"];
         }
     }
 
+    static function git_all_paymethod()
+    {
+        
+        function convert_binance_paymethod($payMethod_from_binance)
+        {
+            $payMethod = [];
+            $payMethod["payId"] = $payMethod_from_binance["id"];
+            $payMethod["payMethodId"] = $payMethod_from_binance["payMethodId"];
+            $payMethod["payType"] = $payMethod_from_binance["payType"] ;
+            $payMethod["payAccount"] = $payMethod_from_binance["payAccount"] ;
+            $payMethod["payBank"] = $payMethod_from_binance["payBank"];
+            $payMethod["paySubBank"] = $payMethod_from_binance["paySubBank"] ;
+            $payMethod["identifier"] = $payMethod_from_binance["identifier"] ;
+            $payMethod["iconUrlColor"] = $payMethod_from_binance["iconUrlColor"] ;
+            $payMethod["tradeMethodName"] = $payMethod_from_binance["tradeMethodName"] ;
+            $payMethod["tradeMethodShortName"] = $payMethod_from_binance["tradeMethodShortName"];
+            $payMethod["tradeMethodBgColor"] = $payMethod_from_binance["tradeMethodBgColor"] ;
+            return $payMethod;
+        }
+        $payMethods_from_binance= git_data::git_my_payMethods_from_binance();
+
+        $my_paymethods = paymethod::all();
+        $supported_paymethods = supported_paymethod::all();
+        $paymethods  = [];
+
+        foreach ($my_paymethods as $my_paymethod) {
+            $paymethods [$my_paymethod->id] = $my_paymethod->toArray();
+            $paymethods [$my_paymethod->id]['supported_paymethod'] = [];
+        }
+    
+        foreach ($my_paymethods as $my_paymethod) {
+            foreach ($supported_paymethods as $supported_paymethod) {
+                if ($my_paymethod->id == $supported_paymethod->paymethod_name_id) {
+                    $paymethods [$my_paymethod->id]['supported_paymethod'][] = $supported_paymethod->toArray();
+                }
+            }
+        }
+
+        foreach ($paymethods as $paymethodId => $paymethod) {
+            foreach ($paymethod['supported_paymethod'] as $key => $supported_paymethod) {
+                foreach ($payMethods_from_binance as $payMethod_from_binance) {
+                    if ($payMethod_from_binance["payMethodId"] == $supported_paymethod["paymethod_id"]) {
+                        $paymethods[$paymethodId]['supported_paymethod'][$key] = convert_binance_paymethod($payMethod_from_binance);
+                    }
+                }
+            }
+        }
+
+        foreach ($paymethods as $key => $paymethod){
+            if ($paymethod['number_of_use'] >= 3){
+                unset($paymethods[$key]);
+            }
+        }
+    
+        return $paymethods;
+    }
 
     static function git_payment($order)
     {
+        $my_payMethods=proces::git_all_paymethod();   
+
+
+        
         foreach ($order["payMethods"] as $payMethod) {
-            if ($payMethod["identifier"] == "Wise") {
-                return $payMethod;
+            foreach ($my_payMethods as $my_payMethod) {
+                foreach ($my_payMethod["supported_paymethod"] as $supported_paymethod) {
+                    if ($payMethod["payMethodId"] == $supported_paymethod["payMethodId"]) {
+                        return $payMethod;
+                    }
+                }
             }
         }
     }

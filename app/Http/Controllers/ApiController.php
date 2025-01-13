@@ -33,12 +33,12 @@ class ApiController extends Controller
         }
 
         $my_ad_data = git_data::ad_data($ads_data, $my_data);
-        
+        print_r($my_ad_data);
         //proces::update_amount($my_data);
         $my_data = chack_list::set_auto_price($my_data);
 
         $my_data = proces::add_defult_ad_amount($my_data, $my_ad_data, $ads_list);
-        $my_data = chack_list::set_auto_amount($my_data, $my_ad_data);
+        $my_data = chack_list::set_amount_for_ads($my_data,$my_ad_data);
       // $my_data = proces::add_crupto_amount($my_data, $my_ad_data);
 
         if (chack_list::chack_ad_status($my_ad_data)) {
@@ -48,9 +48,15 @@ class ApiController extends Controller
         if (chack_list::chack_max_amount($my_data)) {
             return  "max_amount is out of amount";
         }
+        //need to chack if the amount biger then the min amount
+
 
         if (chack_list::chack_amount($my_data)) {
             return  "ad out of amount";
+        }
+
+        if (chack_list::chack_min($my_data,$my_ad_data)) {
+            return  "min amount is biger then the amount";
         }
 
         if (chack_list::chack_full_list($ads_list, $my_data, $my_ad_data)) {

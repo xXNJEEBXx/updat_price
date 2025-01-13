@@ -14,6 +14,11 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+//test track_orders
+Route::get('/track_orders', 'track_controller@track_orders');
+//link localhost:8000/api/track_orders
+
+
 // prics trake
 Route::post('/changprics', 'ApiController@changprics_api');
 Route::post('/postcookies', 'ApiController@postcookies');
@@ -32,9 +37,11 @@ Route::post('/post_track_status', 'track_controller@post_track_status');
 Route::get('/git_track_data', 'track_controller@git_track_data');
 Route::get('/git_track_data2', 'track_controller@track_orders');
 
-//progress order
+//progress order 
+
 //  binance
 Route::get('/git_progress_task', 'progress_orders@git_progress_task');
+Route::post('/chack_progress_order', 'progress_orders@chack_progress_order');
 Route::get('/git_binance_email_otp', 'progress_orders@git_binance_email_otp');
 Route::get('/git_binance_g2fa_otp', 'progress_orders@git_binance_g2fa_otp');
 Route::post('/update_progress_task', 'progress_orders@update_progress_task');

@@ -26,7 +26,10 @@ class progress_orders extends Controller
         if ($ads_data->status() !== 200) {
             return  "You need to log in";
         }
+        //this is to store all the orders that need to be store it
+        //from here
         $finshed_progress_orders = proces::get_finshed_progress_orders();
+        //i have  turn off buy orders
         $progress_orders = git_data::get_progress_orders();
 
         do {
@@ -38,18 +41,19 @@ class progress_orders extends Controller
                 $finshed_progress_orders = proces::get_finshed_progress_orders();
             }
         } while (count($orders_need_to_store_it) > 0);
-
+        //to here
+        //clsoe the orders that are done
         $orders_dones = proces::get_orders_dones($progress_orders, $finshed_progress_orders);
-
         foreach ($orders_dones as $order) {
             $order["status"] = 1;
             proces::update_orders_status($order);
         }
+        //num 8 is for the orders that are sell and just print messge then num 9 just wait the method below  mark it as paid num 10 send the telgram massge num 11 waited your confirm on telgram then num   
         //chack if thare is orders just updated and mark it from 9 to 10
-        //turnd off for now
         proces::chack_if_thare_is_orders_just_updated($progress_orders, $finshed_progress_orders);
         //chack transactions if they take more than 15 minites
         self::chack_transactions();
+        //here we are sure that all the orders are updated to thare status and make any process they could need
         $finshed_progress_orders = proces::get_finshed_progress_orders();
         if (count($finshed_progress_orders) == 0) {
             return "no orders to chack";
@@ -96,6 +100,7 @@ class progress_orders extends Controller
             // print wait it to marked as paid
 
             if ($order->status == 8) {
+                //turn off dirctly start on num 10
                 $order["status"] = 9;
                 proces::update_orders_status($order);
                 echo "wait buyer mark order as paid\n";
@@ -111,16 +116,18 @@ class progress_orders extends Controller
             }
             if ($order->status == 11) {
                 $now = Carbon::now();
+                //need to update with the sms
                 $wise_transactions = wise_transaction::where("status", 0)->get();
-                if (count($wise_transactions) > 0 || $order->updated_at->diffInMinutes($now) >= 2) {
+                if (count($wise_transactions) > 0 || $order->updated_at->diffInMinutes($now) >= 2 || self::chack_vote_yes($updates, $order)) {
                     if (self::chack_vote_no($updates, $order)) {
                         $order["status"] = 7;
                         proces::update_orders_status($order);
-                        echo "bad name cancel order\n";
+                        echo "bad name cancel auto close\n";
+                        //or it take more than 2 minites to pay
                     } else {
                         if (self::chack_vote_yes($updates, $order) || (proces::chack_transaction($order) && $order->updated_at->diffInMinutes($now) >= 7)) {
                             if (proces::chack_transaction($order)) {
-                                proces::close_transaction($order);
+                                echo "you take 7 minites and you have no action system accept the order autmaticly\n";
                             }
                             //send task to binance
                             git_data::send_binace_task_for_release($order);
@@ -134,7 +141,7 @@ class progress_orders extends Controller
                         echo "waiting transaction name Validat or the 5 minites\n";
                     }
                 } else {
-                    echo "waiting transaction 2 minites for the transaction arive\n";
+                    echo "waiting transaction 2 minites for the transaction arive cansole the transaction\n";
                 }
             }
         }
@@ -262,6 +269,32 @@ binace name :" . $order["binace_name"] . " value :" . $order["value"] . " \nwise
 
         return "no progress order";
     }
+
+    public function chack_progress_order($task)
+    {
+        return ["data" => self::chack_progress_order_text($task)];
+    }
+
+    public function chack_progress_order_text($task)
+    {
+        $ads_data = git_data::ads_data();
+        if ($ads_data->status() !== 200) {
+            return  false;
+        }
+        
+         $progress_orders = git_data::full_orders([1], 0);
+        
+
+            foreach ($progress_orders as $order) {
+                if ($order["orderNumber"] == $task["order_id"]) {
+                    return true;
+                }
+            }
+        
+
+        return false;
+    }
+
 
     public function git_progress_task()
     {

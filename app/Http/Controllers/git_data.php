@@ -105,7 +105,7 @@ class git_data extends Controller
             'Content-type' => 'application/json',
             'cookie' => $cookies->cookies,
             'csrftoken' => $cookies->csrftoken,
-            'device-info' => 'eyJzY3JlZW5fcmVzb2x1dGlvbiI6IjE5MjAsMTA4MCIsImF2YWlsYWJsZV9zY3JlZW5fcmVzb2x1dGlvbiI6IjE5MjAsMTA0MCIsInN5c3RlbV92ZXJzaW9uIjoiV2luZG93cyAxMCIsImJyYW5kX21vZGVsIjoidW5rbm93biIsInN5c3RlbV9sYW5nIjoiYXIiLCJ0aW1lem9uZSI6IkdNVCszIiwidGltZXpvbmVPZmZzZXQiOi0xODAsInVzZXJfYWdlbnQiOiJNb3ppbGxhLzUuMCAoV2luZG93cyBOVCAxMC4wOyBXaW42NDsgeDY0KSBBcHBsZVdlYktpdC81MzcuMzYgKEtIVE1MLCBsaWtlIEdlY2tvKSBDaHJvbWUvMTAwLjAuNDg5Ni42MCBTYWZhcmkvNTM3LjM2IiwibGlzdF9wbHVnaW4iOiJQREYgVmlld2VyLENocm9tZSBQREYgVmlld2Vy',
+            'device-info' => 'eyJzY3JlZW5fcmVzb2x1dGlvbiI6IjE5MjAsMTA4MCIsImF2YWlsYWJsZV9zY3JlZW5fcmVzb2x1dGlvbiI6IjE5MjAsMTA0MCIsInN5c3RlbV92ZXJzaW9uIjoiV2luZG93cyAxMCIsImJyYW5kX21vZGVsIjoidW5rbm93biIsInN5c3RlbV9sYW5nIjoiYXIiLCJ0aW1lem9uZSI6IkdNVCszIiwidGltZXpvbmVPZmZzZXQiOi0xODAsInVzZXJfYWdlbnQiOiJNb3ppbGxhLzUuMCAoV2luZG93cyBOVCAxMC4wOyBXaW42NDsgeDY0KSBBcHBsZVdlYktpdC81MzcuMzYgKEtIVE1MLCBsaWtlIEdlY2tvKSBDaHJvbWUvMTAwLjAuNDg5Ni42MCBTYWZhcmkvNTM3LjM2IiwibGlzdF9wbHVnaW4iOiJQREYgVmlld2VyLENocm9tZSBQREYgVmlld2VyLENocm9taXVtIFBERiBWaWV3ZXIsTWljcm9zb2Z0IEVkZ2UgUERGIFZpZXdlcixXZWJLaXQgYnVpbHQtaW4gUERGIiwiY2FudmFzX2NvZGUiOiJhNDBkZGEzMiIsIndlYmdsX3ZlbmRvciI6Ikdvb2dsZSBJbmMuIChOVklESUEpIiwid2ViZ2xfcmVuZGVyZXIiOiJBTkdMRSAoTlZJRElBLCBOVklESUEgR2VGb3JjZSBHVFggMTA2MCA2R0IgRGlyZWN0M0QxMSB2c181XzAgcHNfNV8wLCBEM0QxMSkiLCJhdWRpbyI6IjEyNC4wNDM0NzUyNzUxNjA3NCIsInBsYXRmb3JtIjoiV2luMzIiLCJ3ZWJfdGltZXpvbmUiOiJBc2lhL1JpeWFkaCIsImRldmljZV9uYW1lIjoiQ2hyb21lIFYxMDAuMC40ODk2LjYwIChXaW5kb3dzKSIsImZpbmdlcnByaW50IjoiNzhhYjQ0MjRiMDQ4M2MwNmU4M2Q5NjcyNWIxODBjYzkiLCJkZXZpY2VfaWQiOiIiLCJyZWxhdGVkX2RldmljZV9pZHMiOiIifQ==',
             'Fvideo-Id' => '3208c5733dda270bd919abde5e4c2e92a370532',
             'Fvideo-Token' => 'u6BkDXV/9MSy1+7n+aXiUrAy9MPU+bieouKm7+xyazzul9R3G98j2IXkueeX9Kg0mtcSK/pkDI9PsdvBEBUAVwvQKw6wT4Pawf8hrByGdxvpTe8WfBVxVODSTOXblIv3unVtIMs0PsGcbOlA7z0AUBzM8IdhGW3ubkMQ+ZVqIeUqXNR99ELFVROUNBhQbSuTc=22',
             'Lang' => 'ar',
@@ -124,7 +124,7 @@ class git_data extends Controller
             'X-Ui-Request-Trace' => 'c076ecee-7605-402a-a647-d45906a3fe21',
         ];
     }
-    
+
     static function ads_data()
     {
         $ads_data = self::catch_errors(function () {
@@ -142,13 +142,18 @@ class git_data extends Controller
         }
         $payTypes = [];
         if (isset($my_data["payTypes"]) > 0) {
-            foreach ($my_data["payTypes"] as $payType) {
-                $payTypes[] = $payType;
-            }
+            $payTypes = $my_data["payTypes"];
         }
-
-        $ads_list = self::catch_errors(function () use (&$payTypes, &$my_data) {
-            return  Http::withHeaders(self::heders())->post("https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search", ["additionalKycVerifyFilter" => 0,"asset" => $my_data["asset"],"assetClassifies" => ["mass", "profession", "fiat_trade"],"countries" => [],"fiat" => $my_data["fiat"],"filterType" => "all","page" => 1,"payTypes" => $payTypes,"periods" => [],"proMerchantAds" => false, "publisherType" => null, "rows" => 10,"shieldMerchantAds" => false, "tradeType" => $my_data["trade_type"]]);
+        $periods = [];
+        if (isset($my_data["periods"]) > 0) {
+            $periods = $my_data["periods"];
+        }
+        $countries= [];
+        if (isset($my_data["countries"]) > 0) {
+            $countries = $my_data["countries"];
+        }
+        $ads_list = self::catch_errors(function () use (&$payTypes, &$my_data, &$periods, &$countries) {
+            return  Http::withHeaders(self::heders())->post("https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search", ["additionalKycVerifyFilter" => 0, "asset" => $my_data["asset"], "assetClassifies" => ["mass", "profession", "fiat_trade"], "countries" => $countries, "fiat" => $my_data["fiat"], "filterType" => "all", "page" => 1, "payTypes" => $payTypes, "periods" => $periods, "proMerchantAds" => false, "publisherType" => null, "rows" => 10, "shieldMerchantAds" => false, "tradeType" => $my_data["trade_type"]]);
         });
 
         return $ads_list["data"];
@@ -189,7 +194,7 @@ class git_data extends Controller
     static function paylode_for_change_price($enemy_ad, $my_ad_data, $my_data)
     {
         //$initAmount=self::total_initAmount($enemy_ad, $my_ad_data, $my_data);
-        $initAmount=$my_ad_data["initAmount"];
+        $initAmount = $my_ad_data["initAmount"];
         $paylode = [
             "adAdditionalKycVerifyItems" => $my_ad_data["adAdditionalKycVerifyItems"],
             "adTags" => [],
@@ -320,6 +325,17 @@ class git_data extends Controller
     }
     //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@track orders& closes orders@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
+
+    static function git_my_payMethods_from_binance()
+    {
+        $my_paymthods = self::catch_errors(function () {
+            return Http::withHeaders(self::heders())->withBody('{}', 'application/json')->post("https://p2p.binance.com/bapi/c2c/v2/private/c2c/pay-method/user-paymethods");
+        });
+        return $my_paymthods["data"];
+    
+    }
+
+
     static function git_track_data()
     {
 
@@ -362,8 +378,8 @@ class git_data extends Controller
             return Http::withHeaders(self::heders())->get("https://www.binance.com/bapi/composite/v1/public/marketing/symbol/list");
         });
         foreach ($data["data"] as $element) {
-            if ($my_data["fiat"] =="SAR") {
-                $element["price"]= $element["price"]*3.75;
+            if ($my_data["fiat"] == "SAR") {
+                $element["price"] = $element["price"] * 3.75;
             }
             if ($element["name"] == $my_data["asset"]) {
                 $my_data["price"] = $element["price"] * $my_data["price_multiplied"];
@@ -373,10 +389,10 @@ class git_data extends Controller
         return  $my_data;
     }
 
-    static function traked_ad($my_data, $ads_list)
+    static function traked_ad($my_data, $ads_list, $my_payMethods)
     {
         foreach ($ads_list as $ad) {
-            if (chack_list::chack_ad_for_track($my_data, $ad)) {
+            if (chack_list::chack_ad_for_track($my_data, $ad, $my_payMethods)) {
                 $traked_ad = self::catch_errors(function () use ($ad) {
                     return  Http::withHeaders(self::heders())->get("https://p2p.binance.com/bapi/c2c/v2/public/c2c/adv/selected-adv/" . $ad["adv"]["advNo"]);
                 });
@@ -385,24 +401,22 @@ class git_data extends Controller
         }
     }
 
-    static function open_order_req($my_data, $traked_ad)
+    static function open_order_req($my_data, $traked_ad, $my_payMethods)
     {
-        print_r(self::paylode_for_open_order($my_data, $traked_ad));
-        self::catch_errors(function () use ($my_data, $traked_ad) {
-            Http::withHeaders(self::heders())->post("https://p2p.binance.com/bapi/c2c/v2/private/c2c/order-match/makeOrder", self::paylode_for_open_order($my_data, $traked_ad));
+        
+        print_r($traked_ad);
+        print_r(self::paylode_for_open_order($my_data, $traked_ad, $my_payMethods));
+        self::catch_errors(function () use ($my_data, $traked_ad,$my_payMethods) {
+            Http::withHeaders(self::heders())->post("https://p2p.binance.com/bapi/c2c/v3/private/c2c/order-match/placeOrder", self::paylode_for_open_order($my_data, $traked_ad, $my_payMethods));
         });
     }
-
-    static function paylode_for_open_order($my_data, $traked_ad)
+    //need to add all payTypes
+    static function paylode_for_open_order($my_data, $traked_ad, $my_payMethods)
     {
-        $pay_methed = self::pay_methed($my_data, $traked_ad);
-        if ($my_data["trade_type"] == "SELL") {
-            if ($pay_methed["identifier"] == "Wise") {
-                $pay_methed["payId"] = 33677319;
-            }
-        }
+        $pay_methed = self::pay_methed($my_data, $traked_ad, $my_payMethods);
 
-        return ["advOrderNumber" => $traked_ad["adv"]["advNo"], "asset" => $my_data["asset"], "matchPrice" => $traked_ad["adv"]["price"], "fiatUnit" => $my_data["fiat"], "buyType" => "BY_MONEY", "totalAmount" => self::total_amount($my_data, $traked_ad), "tradeType" => $my_data["trade_type"], "origin" => "MAKE_TAKE", "payId" => $pay_methed["payId"], "payType" => $pay_methed["identifier"]];
+        //need to re check
+        return ["advOrderNumber" => $traked_ad["adv"]["advNo"],"area"=>"p2pZone","asset" => $my_data["asset"], "buyType" => "BY_MONEY","channel"=>"c2c" , "fiatUnit" => $my_data["fiat"],"matchPrice" => $traked_ad["adv"]["price"], "origin" => "MAKE_TAKE", "payId" => $pay_methed["payId"], "payType" => $pay_methed["identifier"], "totalAmount" => self::total_amount($my_data, $traked_ad), "tradeType" => $my_data["trade_type"]];
     }
 
     static function total_amount($my_data, $traked_ad)
@@ -421,26 +435,47 @@ class git_data extends Controller
         return round($amount, 2, PHP_ROUND_HALF_DOWN);
     }
 
-    static function selled_amount($my_data, $traked_ad)
+    // static function selled_amount($my_data, $traked_ad)
+    // {
+    //     $buy_amount = ($my_data["orginal_price"] * $my_data["track_amount"]) / $traked_ad["adv"]["price"];
+    //     if ($buy_amount >= self::MSA($traked_ad)) {
+
+    //         $selled_amount = ($traked_ad["adv"]["price"] * self::MSA($traked_ad)) / $my_data["orginal_price"];
+    //     } else {
+    //         $selled_amount = $my_data["track_amount"];
+    //     }
+    //     return round($selled_amount, 2, PHP_ROUND_HALF_DOWN);
+    // }
+
+
+    static function pay_methed($my_data, $traked_ad, $my_payMethods)
     {
-        $buy_amount = ($my_data["orginal_price"] * $my_data["track_amount"]) / $traked_ad["adv"]["price"];
-        if ($buy_amount >= self::MSA($traked_ad)) {
-
-            $selled_amount = ($traked_ad["adv"]["price"] * self::MSA($traked_ad)) / $my_data["orginal_price"];
-        } else {
-            $selled_amount = $my_data["track_amount"];
-        }
-        return round($selled_amount, 2, PHP_ROUND_HALF_DOWN);
-    }
-
-
-    static function pay_methed($my_data, $traked_ad)
-    {
-        foreach ($traked_ad["adv"]["tradeMethods"] as $pay_methed) {
-            if ($pay_methed["identifier"] == $my_data["payTypes"]) {
-                return $pay_methed;
+        // foreach ($traked_ad["adv"]["tradeMethods"] as $pay_methed) {
+        //     foreach ($my_data["payTypes"] as $payType) {
+        //         if ($pay_methed["identifier"] == $payType) {
+        //             if ($my_data["trade_type"] == "SELL") {
+        //                 if ($pay_methed["identifier"] == "Wise") {
+        //                     $pay_methed["payId"] = 33677319;
+        //                 }
+        //             }
+        //             return $pay_methed;
+        //         }
+        //     }
+        // }
+        foreach ($traked_ad["adv"]["tradeMethods"] as $payMethod) {
+            foreach ($my_payMethods as $my_payMethod) {
+                foreach ($my_payMethod["supported_paymethod"] as $supported_paymethod) {
+                    if ($payMethod["identifier"] == $supported_paymethod["identifier"]) {
+                        if ($my_data["trade_type"] == "SELL") {
+                            return  $supported_paymethod;
+                        }else{
+                            return  $payMethod;
+                        }
+                    }
+                }
             }
         }
+
     }
 
     static function send_massge($telegram_massge)
@@ -461,9 +496,6 @@ class git_data extends Controller
 
     static function track_amount($my_data)
     {
-        //may need to convert to sar
-
-        //not working i think
         $my_data["free_amount"] = 0;
         $wallet_amount = self::git_wallet_amount();
         if ($my_data["trade_type"] == "BUY") {
@@ -514,7 +546,8 @@ class git_data extends Controller
             foreach ($wallet_amount["data"] as $crupto) {
                 if ($crupto["asset"] == $my_data["asset"]) {
                     $my_data["free_amount"] = $crupto["free"];
-                    $my_data["max_amount"] -= ($crupto["free"] + $crupto["freeze"]) * $my_data["orginal_price"];
+                    //mybe it good for buys tracks
+                    //  $my_data["max_amount"] -= ($crupto["free"] + $crupto["freeze"]) * $my_data["orginal_price"];
                 }
             }
             if ($my_data["track_amount"] > $my_data["max_amount"]) {
@@ -532,7 +565,7 @@ class git_data extends Controller
         foreach ($all_orders as $order) {
             //4 complete orders 6 canceled orders
             if ($order["tradeType"] == "BUY") {
-                $progress_orders[] = $order;
+             //   $progress_orders[] = $order;
             } else {
                 if ($order["orderStatus"] == 2) {
                     $progress_orders[] = $order;

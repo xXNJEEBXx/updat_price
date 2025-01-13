@@ -52,7 +52,7 @@ class updatePrise extends Command
                 //--------------choce_best_price-------------------
                 //---sell
                 //["name" => "SELL BTC AD", "price_multiplied" => 1.015, "id" => "11496911875305992192", "price_type" => "auto", "asset" => "BTC", "fiat" => "USD", "track_type" => "choce_best_price", "trade_type" => "SELL", "payTypes" => "Wise"],
-                ["name" => "SELL BTC AD with SAR", "price_multiplied" => 1.1, "id" => "12704852398681194496", "price_type" => "auto", "asset" => "BTC", "fiat" => "SAR", "track_type" => "choce_best_price", "trade_type" => "SELL", "payTypes" => ["stcpay"]],
+                //["name" => "SELL BTC AD with SAR", "price_multiplied" => 1.1, "id" => "12704852398681194496", "price_type" => "auto", "asset" => "BTC", "fiat" => "SAR", "track_type" => "choce_best_price", "trade_type" => "SELL",/*this is only for the search*/ "payTypes" => ["stcpay"]],
                 // ["name" => "SELL USDT AD", "price_multiplied" => 1.013, "id" => "11539542195302817792", "price_type" => "auto", "asset" => "USDT", "fiat" => "USD", "track_type" => "choce_best_price", "trade_type" => "SELL",  "payTypes" => "Wise"],
                 //---BUY
                 // ["name" => "BUY USDT AD", "price_multiplied" => 1.011, "id" => "11506316506589458432", "price_type" => "auto", "asset" => "USDT", "fiat" => "USD", "track_type" => "choce_best_price", "trade_type" => "BUY", "max_amount" => 1000, "payTypes" => "Wise"],
@@ -65,14 +65,14 @@ class updatePrise extends Command
                 //["name" => "BUY BUSD track", "price_multiplied" => 1.005, "asset" => "BUSD", "fiat" => "USD", "track_type" => "good_dule", "max_amount" => 100, "buy_the_lowist" => true, "payTypes" => "Wise", "price_type" => "auto", "trade_type" => "BUY"],
                 // ---SELL
                 //["name" => "SELL BTC track", "price_multiplied" => 1.034, "asset" => "BTC", "fiat" => "USD", "track_type" => "good_dule", "payTypes" => "Wise", "price_type" => "auto", "trade_type" => "SELL"],
+                //["name" => "SELL BTC with SAR track", "price_multiplied" => 1.15, "asset" => "BTC", "fiat" => "SAR", "track_type" => "good_dule", "payTypes" => ["stcpay"],"periods"=>[15, 30],"countries"=>["SA"], "price_type" => "auto", "trade_type" => "SELL", "max_amount" => 70],
+               // ["name" => "SELL USDT with SAR track", "price_multiplied" => 1.03, "asset" => "USDT", "fiat" => "SAR", "track_type" => "good_dule", "payTypes" => ["stcpay"],"periods"=>[15, 30],"countries"=>["SA"], "price_type" => "auto", "trade_type" => "SELL", "max_amount" => 70],
                 // ["name" => "SELL USDT track", "price_multiplied" => 1.013, "asset" => "USDT", "fiat" => "USD", "track_type" => "good_dule", "payTypes" => "Wise", "price_type" => "auto", "trade_type" => "SELL"],
 
 
                 // --------------pading_ads-------------------------
-                // ["name" => "chack progress orders", "track_type" => "pading_ads"]
+                 ["name" => "chack progress orders", "track_type" => "pading_ads"]
 
-                // --------------pading_ads-------------------------
-                // ["name" => "chack progress orders", "track_type" => "pading_ads"]
 
                 // --------------convert-------------------------
                // ["name" => "convert_USDT_to_NAT", "track_type" => "convert", "my_data" => ["heder" => "convert"]]
@@ -93,8 +93,7 @@ class updatePrise extends Command
         }
         return Command::SUCCESS;
     }
-    public function make_req($data)
-    {
+    public function make_req($data){
         if ($data["track_type"] == "choce_best_price") {
             $ApiController = new ApiController;
             $req = $ApiController->changprics($data);

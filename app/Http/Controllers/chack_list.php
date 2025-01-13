@@ -75,7 +75,7 @@ class chack_list extends Controller
             $min_amount_for_usdt = 60;
             $min_amount_for_BTC = 60;
         }
-
+        echo $my_data["track_amount"]."\n";
         if ($my_data["asset"] == "USDT" || $my_data["asset"] == "BUSD") {
             if ($my_data["track_amount"] < $min_amount_for_usdt) {
                 return true;
@@ -84,6 +84,14 @@ class chack_list extends Controller
             if ($my_data["track_amount"] < $min_amount_for_BTC) {
                 return true;
             }
+        }
+        return false;
+    }
+
+    static function chack_min($my_data, $my_ad_data)
+    {
+        if ($my_ad_data["minSingleTransAmount"] > $my_data["track_amount"]) {
+            return true;
         }
         return false;
     }
@@ -177,7 +185,7 @@ class chack_list extends Controller
         }
     }
 
-    static function chack_ad_for_track($my_data, $ad)
+    static function chack_ad_for_track($my_data, $ad, $my_payMethods)
     {
         if ($my_data["trade_type"] == "BUY") {
             if ($ad["adv"]["price"] > $my_data["price"]) {
@@ -200,6 +208,9 @@ class chack_list extends Controller
             if (!$ad["adv"]["isTradable"]) {
                 return false;
             }
+            if (self::chack_target_ad_paymetods($ad, $my_payMethods)) {
+                return false;
+            }
         }
 
         return true;
@@ -207,10 +218,10 @@ class chack_list extends Controller
 
 
 
-    static function chack_ads($my_data, $ads_list)
+    static function chack_ads($my_data, $ads_list, $my_payMethods)
     {
         foreach ($ads_list as $ad) {
-            if (self::chack_ad_for_track($my_data, $ad)) {
+            if (self::chack_ad_for_track($my_data, $ad, $my_payMethods)) {
                 return true;
             }
         }
@@ -227,11 +238,18 @@ class chack_list extends Controller
         return $my_data;
     }
 
-    
-    static function set_auto_amount($my_data,$my_ad_data)
+    static function set_amount_for_ads($my_data,$my_ad_data)
     {
         //$my_data = git_data::track_amount($my_data, $my_ad_data);
         $my_data["track_amount"] =$my_ad_data["initAmount"] * $my_data["orginal_price"];
+        return $my_data;
+    }
+
+
+    static function set_auto_amount($my_data)
+    {
+        $my_data = git_data::track_amount($my_data);
+        // $my_data["track_amount"] =$my_ad_data["initAmount"] * $my_data["orginal_price"];
         return $my_data;
     }
 
@@ -242,6 +260,21 @@ class chack_list extends Controller
             return true;
         }
         return false;
+    }
+
+    static function chack_target_ad_paymetods($ad, $my_payMethods)
+    {
+        foreach ($ad["adv"]["tradeMethods"] as $payMethod) {
+            foreach ($my_payMethods as $my_payMethod) {
+                foreach ($my_payMethod["supported_paymethod"] as $supported_paymethod) {
+                    if ($payMethod["identifier"] == $supported_paymethod["identifier"]) {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true;
     }
 
     static function chack_binace_email_otp_id($id)

@@ -10,24 +10,39 @@ class track_controller extends Controller
 {
     public function track_orders($my_data)
     {
+
+ 
+
         $ads_data = git_data::ads_data();
         if ($ads_data->status() !== 200) {
             return  "You need to log in";
         }
-        proces::update_amount($my_data);
-        $my_data = chack_list::price_type_and_amount($my_data);
+
+ 
+
+        //proces::update_amount($my_data);
+        $my_data = chack_list::set_auto_price($my_data);
+        $my_data = chack_list::set_auto_amount($my_data);
         $ads_list = git_data::ads_list($my_data);
 
 
-        if (chack_list::chack_max_amount($my_data)) {
-            return  "max amount is out of amount";
+        //TURN OFF FOR NOW
+        // if (chack_list::chack_max_amount($my_data)) {
+        //     return  "max amount is out of amount";
+        // }
+
+        if (chack_list::chack_amount($my_data)) {
+            return  "thare is no amount";
         }
 
-        if (chack_list::chack_ads($my_data, $ads_list)) {
+        //need to add black list
+        $my_payMethods=proces::git_all_paymethod();    
+
+        if (chack_list::chack_ads($my_data, $ads_list, $my_payMethods)) {
             if (chack_list::chack_multiple_orders()) {
                 return "stop opens orders";
             } else {
-                proces::make_order($my_data, $ads_list);
+                proces::make_order($my_data, $ads_list, $my_payMethods);
                 return "New order opened";
             }
         };
