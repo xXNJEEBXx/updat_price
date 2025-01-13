@@ -270,7 +270,7 @@ binace name :" . $order["binace_name"] . " value :" . $order["value"] . " \nwise
         return "no progress order";
     }
 
-    public function chack_progress_order($task)
+    public function chack_progress_order(Request $task)
     {
         return ["data" => self::chack_progress_order_text($task)];
     }
